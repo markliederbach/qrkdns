@@ -1,0 +1,11 @@
+
+version: "3"
+
+tasks:
+  deps:
+    desc: Install project dependencies
+    cmds: []
+  run:
+    desc: Run qrkdns
+    cmds:
+      - go run cmds/qrkdns/main.go
