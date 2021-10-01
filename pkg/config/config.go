@@ -8,6 +8,9 @@ import (
 // Config holds the app configuration
 type Config struct {
 
+	// DomainName sets the target domain name
+	DomainName string `env:"DOMAIN_NAME" default:"qrkdns.net"`
+
 	// CloudFlareAccountID is the target cloudflare account
 	CloudFlareAccountID string `env:"CLOUDFLARE_ACCOUNT_ID"`
 
