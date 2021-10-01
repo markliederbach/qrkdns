@@ -1,11 +1,90 @@
 
 version: "3"
 
+vars:
+  DOTENV:
+    sh: cat .env | grep -v "#" | xargs
+
 tasks:
   deps:
     desc: Install project dependencies
     cmds: []
+
+  env:
+    desc: Follow prompts to generate a new .env file for local development
+    cmds:
+      - |
+        printf "CloudFlare Account ID: "
+        stty -echo
+        read account
+        export account=$account
+        stty echo
+
+        printf "\n"
+
+        printf "CloudFlare API Token: "
+        stty -echo
+        read token
+        export token=$token
+        stty echo
+
+        envsubst '$account,$token' < .env.template > .env
+
+        unset token
+        unset account
+    silent: true
+    preconditions:
+      - sh: test ! -f .env
+        msg: .env already exists. Refusing to overwrite.
+      - sh: which envsubst
+        msg: Must have `envsubst` installed to run this task
+
   run:
     desc: Run qrkdns
     cmds:
-      - go run cmds/qrkdns/main.go
+      - "{{.DOTENV}} go run cmds/qrkdns/main.go"
+    silent: true
+
+  test:
+    desc: Run package tests
+    cmds:
+      - task: test-base
+      - task: coverage
+
+  test-base:
+    desc: Run package tests
+    cmds:
+      - go clean -testcache
+      - go test -mod=vendor -coverpkg=./... -coverprofile=coverage.out.tmp ./...
+      - >
+        cat coverage.out.tmp
+        | grep -v
+        -e "mocks/"
+        > coverage.out
+      - rm coverage.out.tmp
+
+  test-cover:
+    desc: Run all tests and display coverage report
+    deps:
+      - test-base
+    cmds:
+      - go tool cover -html=coverage.out
+  
+  coverage:
+    desc: Exits in non-zero if total coverage is below threshold
+    vars:
+      THRESHOLD: 100
+    cmds:
+      - >
+        coverage=$(go tool cover -func=coverage.out | grep "total:" | grep -o -E '1?[0-9][0-9]?.[0-9]');
+        echo "Total Coverage:" $coverage%;
+        if awk "BEGIN {exit !($coverage < {{.THRESHOLD}})}"; then
+          echo "[FAIL] Total coverage is less than {{.THRESHOLD}}%"
+          exit 1
+        else
+          echo [PASS]
+          exit 0
+        fi
+    preconditions:
+      - test -f coverage.out
+    silent: true

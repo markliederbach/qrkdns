@@ -1,0 +1,115 @@
+version: "3"
+
+tasks:
+
+  install:
+    desc: Install go tools
+    cmds:
+      - cat tools.go | grep _ | awk -F'"' '{print $2}' | xargs -tI % go install %
+
+  test:
+    desc: Run package tests
+    cmds:
+      - task: test-base
+      - task: coverage
+
+  test-base:
+    desc: Run package tests
+    cmds:
+      - go clean -testcache
+      - go test -mod=vendor -coverpkg=./... -coverprofile=coverage.out.tmp ./...
+      - >
+        cat coverage.out.tmp
+        | grep -v
+        -e "mocks/"
+        > coverage.out
+      - rm coverage.out.tmp
+
+  test-cover:
+    desc: Run all tests and display coverage report
+    deps:
+      - test-base
+    cmds:
+      - go tool cover -html=coverage.out
+  
+  coverage:
+    desc: Exits in non-zero if total coverage is below threshold
+    vars:
+      THRESHOLD: 100
+    cmds:
+      - >
+        coverage=$(go tool cover -func=coverage.out | grep "total:" | grep -o -E '1?[0-9][0-9]?.[0-9]');
+        echo "Total Coverage:" $coverage%;
+        if awk "BEGIN {exit !($coverage < {{.THRESHOLD}})}"; then
+          echo "[FAIL] Total coverage is less than {{.THRESHOLD}}%"
+          exit 1
+        else
+          echo [PASS]
+          exit 0
+        fi
+    preconditions:
+      - test -f coverage.out
+    silent: true
+
+  lint:
+    desc: Lint code
+    cmds:
+      - golangci-lint run --config .golangci.yml --verbose
+    preconditions:
+      - which golangci-lint
+
+  bump:
+    desc: Bumping tag number by major,minor,patch change
+    vars:
+      CHANGE_TYPE: '{{default "nil" .CHANGE_TYPE}}'
+      CURRENT_TAG:
+        sh: git describe --tags | grep -o -E \\d+\\.\\d+\\.\\d+
+    cmds:
+      - |
+        level="{{.CHANGE_TYPE}}"
+        tag="{{.CURRENT_TAG}}"
+        current="${tag//v}"
+        major=$(echo $current | cut -d. -f1)
+        minor=$(echo $current | cut -d. -f2)
+        patch=$(echo $current | cut -d. -f3)
+        case $level in
+            patch)
+                patch=$((patch+1))
+            ;;
+            minor)
+                patch=0
+                minor=$((minor+1))
+            ;;
+            major)
+                patch=0
+                minor=0
+                major=$((major+1))
+            ;;
+            *)
+                echo "Invalid level passed"
+                return 2
+        esac
+        new="v$major.$minor.$patch"
+        echo "[Current] v$current -> [New] $new"
+        git tag $new && git push origin $new
+    preconditions:
+      - sh: "[[ $(git rev-parse --abbrev-ref HEAD) == 'main' ]]"
+        msg: Must be on main to push a tag
+      - sh: "git diff --quiet"
+        msg: No uncommmitted files allowed before publishing
+      - sh: "[ '{{.CHANGE_TYPE}}' != 'nil' ]"
+        msg: Must run one of `task bump:[major, minor, patch]`
+    silent: true
+
+  bump:major:
+    cmds:
+      - task: bump
+        vars: { CHANGE_TYPE: "major" }
+  bump:minor:
+    cmds:
+      - task: bump
+        vars: { CHANGE_TYPE: "minor" }
+  bump:patch:
+    cmds:
+      - task: bump
+        vars: { CHANGE_TYPE: "patch" }

@@ -1,7 +1,17 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/markliederbach/qrkdns/pkg/config"
+	log "github.com/sirupsen/logrus"
+)
 
 func main() {
-	fmt.Println("Hello world!")
+	conf, err := config.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("token: %v", conf.CloudFlareAPIToken)
 }
