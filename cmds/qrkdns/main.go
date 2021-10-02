@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/markliederbach/qrkdns/pkg/clients/cloudflare"
+	"github.com/markliederbach/qrkdns/pkg/clients/ip"
 	"github.com/markliederbach/qrkdns/pkg/config"
 	log "github.com/sirupsen/logrus"
 )
@@ -25,10 +26,16 @@ func main() {
 		log.Fatal(err)
 	}
 
-	dnsRecords, err := cloudflareClient.ListDNSRecords(ctx)
+	_, err = cloudflareClient.ListDNSRecords(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Infof("Domain %v has %v DNS records", cloudflareClient.DomainName, len(dnsRecords))
+	ipClient := ip.NewClient(conf.IPServiceURL)
+	externalIP, err := ipClient.GetExternalIPAddress(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Infof("External IP Address: %v", externalIP)
 }

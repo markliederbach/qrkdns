@@ -39,6 +39,7 @@ func TestFile(t *testing.T) {
 					DomainName:          "qrkdns.net",
 					CloudFlareAccountID: "foo",
 					CloudFlareAPIToken:  "bar",
+					IPServiceURL:        "http://checkip.amazonaws.com/",
 					LogLevel:            "INFO",
 				}
 

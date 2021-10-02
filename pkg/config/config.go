@@ -21,6 +21,9 @@ type Config struct {
 	// CloudFlareAPIToken contains the secret scoped API token
 	CloudFlareAPIToken string `env:"CLOUDFLARE_API_TOKEN"`
 
+	// IPServiceURL is a web service that simply prints the IP Address
+	IPServiceURL string `env:"IP_SERVICE_URL" default:"http://checkip.amazonaws.com/"`
+
 	// LogLevel controls the output verbosity
 	LogLevel string `env:"LOG_LEVEL" default:"INFO"`
 }
