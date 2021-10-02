@@ -23,6 +23,7 @@ func TestFile(t *testing.T) {
 				env := mocks.MockEnv{}
 				err := env.Load(
 					map[string]string{
+						"NETWORK_ID":            "xxx",
 						"CLOUDFLARE_ACCOUNT_ID": "foo",
 						"CLOUDFLARE_API_TOKEN":  "bar",
 					},
@@ -34,6 +35,8 @@ func TestFile(t *testing.T) {
 				g.Expect(err).NotTo(HaveOccurred())
 
 				expectedConf := config.Config{
+					NetworkID:           "xxx",
+					DomainName:          "qrkdns.net",
 					CloudFlareAccountID: "foo",
 					CloudFlareAPIToken:  "bar",
 					LogLevel:            "INFO",
@@ -50,6 +53,7 @@ func TestFile(t *testing.T) {
 				env := mocks.MockEnv{}
 				err := env.Load(
 					map[string]string{
+						"NETWORK_ID":            "", // required
 						"CLOUDFLARE_ACCOUNT_ID": "", // required
 						"CLOUDFLARE_API_TOKEN":  "", // required
 					},
@@ -69,6 +73,7 @@ func TestFile(t *testing.T) {
 				env := mocks.MockEnv{}
 				err := env.Load(
 					map[string]string{
+						"NETWORK_ID":            "xxx",
 						"CLOUDFLARE_ACCOUNT_ID": "foo",
 						"CLOUDFLARE_API_TOKEN":  "bar",
 						"LOG_LEVEL":             "baz", // not valid

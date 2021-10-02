@@ -8,7 +8,11 @@ import (
 // Config holds the app configuration
 type Config struct {
 
-	// DomainName sets the target domain name
+	// NetworkID is a unique identifier used as the subdomain for
+	// this network.
+	NetworkID string `env:"NETWORK_ID"`
+
+	// DomainName sets the target zone's domain name
 	DomainName string `env:"DOMAIN_NAME" default:"qrkdns.net"`
 
 	// CloudFlareAccountID is the target cloudflare account

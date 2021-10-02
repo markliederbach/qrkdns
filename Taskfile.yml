@@ -28,7 +28,15 @@ tasks:
         export token=$token
         stty echo
 
-        envsubst '$account,$token' < .env.template > .env
+        printf "\n"
+
+        printf "Network ID: "
+        stty -echo
+        read network
+        export network=$network
+        stty echo
+
+        envsubst '$account,$token,$network' < .env.template > .env
 
         unset token
         unset account

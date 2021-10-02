@@ -201,7 +201,7 @@ github.com/ldez/tagliatelle
 github.com/magiconair/properties
 # github.com/maratori/testpackage v1.0.1
 github.com/maratori/testpackage/pkg/testpackage
-# github.com/markliederbach/configr v0.1.0
+# github.com/markliederbach/configr v0.1.1
 ## explicit
 github.com/markliederbach/configr
 github.com/markliederbach/configr/mocks
@@ -312,6 +312,7 @@ github.com/securego/gosec/v2/rules
 # github.com/shazow/go-diff v0.0.0-20160112020656-b6b7b6733b8c
 github.com/shazow/go-diff/difflib
 # github.com/sirupsen/logrus v1.8.1
+## explicit
 github.com/sirupsen/logrus
 # github.com/sonatard/noctx v0.0.1
 github.com/sonatard/noctx
