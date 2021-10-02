@@ -57,19 +57,19 @@ tasks:
     desc: Run package tests
     cmds:
       - task: test-base
+      - >
+        cat coverage.out
+        | grep -v
+        -e "mocks/"
+        > coverage.out.tmp
+      - mv coverage.out.tmp coverage.out
       - task: coverage
 
   test-base:
     desc: Run package tests
     cmds:
       - go clean -testcache
-      - go test -mod=vendor -coverpkg=./... -coverprofile=coverage.out.tmp ./...
-      - >
-        cat coverage.out.tmp
-        | grep -v
-        -e "mocks/"
-        > coverage.out
-      - rm coverage.out.tmp
+      - go test -mod=vendor -coverpkg=./... -coverprofile=coverage.out ./...
 
   test-cover:
     desc: Run all tests and display coverage report
