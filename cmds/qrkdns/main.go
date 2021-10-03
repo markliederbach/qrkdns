@@ -37,5 +37,5 @@ func main() {
 		log.Fatal(err)
 	}
 
-	log.Infof("DNS updated")
+	log.Infof("Sync complete")
 }
