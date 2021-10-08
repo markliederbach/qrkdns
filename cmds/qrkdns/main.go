@@ -26,16 +26,16 @@ func main() {
 		log.Fatal(err)
 	}
 
-	_, err = cloudflareClient.ListDNSRecords(ctx)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	ipClient := ip.NewClient(conf.IPServiceURL)
 	externalIP, err := ipClient.GetExternalIPAddress(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Infof("External IP Address: %v", externalIP)
+	err = cloudflareClient.ApplyDNSARecord(ctx, conf.NetworkID, externalIP)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Infof("Sync complete")
 }

@@ -37,6 +37,9 @@ func init() {
 	sdkFunctions := []string{
 		"ZoneIDByName",
 		"DNSRecords",
+		"CreateDNSRecord",
+		"UpdateDNSRecord",
+		"DeleteDNSRecord",
 	}
 	for _, functionName := range sdkFunctions {
 		mocks.ObjectChannels[functionName] = make(chan interface{}, 100)
@@ -70,4 +73,31 @@ func (c *MockCloudflareSDKClient) DNSRecords(ctx context.Context, zoneID string,
 	default:
 		return DefaultDNSRecords, err
 	}
+}
+
+// CreateDNSRecord implements corresponding client function
+func (c *MockCloudflareSDKClient) CreateDNSRecord(ctx context.Context, zoneID string, rr sdk.DNSRecord) (*sdk.DNSRecordResponse, error) {
+	functionName := "CreateDNSRecord"
+	obj := configrmocks.GetObject(functionName)
+	err := mocks.GetError(functionName)
+	switch obj := obj.(type) {
+	case *sdk.DNSRecordResponse:
+		return obj, err
+	default:
+		return &sdk.DNSRecordResponse{}, err
+	}
+}
+
+// UpdateDNSRecord implements corresponding client function
+func (c *MockCloudflareSDKClient) UpdateDNSRecord(ctx context.Context, zoneID string, recordID string, rr sdk.DNSRecord) error {
+	functionName := "UpdateDNSRecord"
+	err := mocks.GetError(functionName)
+	return err
+}
+
+// DeleteDNSRecord implements corresponding client function
+func (c *MockCloudflareSDKClient) DeleteDNSRecord(ctx context.Context, zoneID string, recordID string) error {
+	functionName := "DeleteDNSRecord"
+	err := mocks.GetError(functionName)
+	return err
 }
