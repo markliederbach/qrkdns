@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	sdk "github.com/cloudflare/cloudflare-go"
 	configrmocks "github.com/markliederbach/configr/mocks"
 	"github.com/markliederbach/qrkdns/pkg/clients/cloudflare"
 	"github.com/markliederbach/qrkdns/pkg/mocks"
@@ -39,7 +40,7 @@ func TestFile(t *testing.T) {
 				)
 				g.Expect(err).NotTo(HaveOccurred())
 
-				records, err := client.ListDNSRecords(ctx)
+				records, err := client.ListDNSARecords(ctx, "bar")
 				g.Expect(err).NotTo(HaveOccurred())
 				g.Expect(records).To(Equal(mocks.DefaultDNSRecords))
 			},
@@ -140,8 +141,260 @@ func TestFile(t *testing.T) {
 
 				configrmocks.AddErrorReturns("DNSRecords", fmt.Errorf("nope"))
 
-				_, err = client.ListDNSRecords(ctx)
+				_, err = client.ListDNSARecords(ctx, "bar")
 				g.Expect(err).To(MatchError("nope"))
+			},
+		},
+		{
+			testCase: "apply creates a new record",
+			runner: func(tt *testing.T) {
+				g := NewGomegaWithT(tt)
+
+				ctx := context.Background()
+
+				err := configrmocks.AddObjectReturns(
+					"DNSRecords",
+					[]sdk.DNSRecord{},
+				)
+				g.Expect(err).NotTo(HaveOccurred())
+
+				client, err := cloudflare.NewClientWithToken(
+					ctx,
+					"account1234",
+					"foo.net",
+					"token1234",
+					withMockSDKClient,
+				)
+				g.Expect(err).NotTo(HaveOccurred())
+
+				err = client.ApplyDNSARecord(ctx, "bar", "1.2.3.4")
+				g.Expect(err).NotTo(HaveOccurred())
+			},
+		},
+		{
+			testCase: "apply deletes existing and creates a new record",
+			runner: func(tt *testing.T) {
+				g := NewGomegaWithT(tt)
+
+				ctx := context.Background()
+
+				client, err := cloudflare.NewClientWithToken(
+					ctx,
+					"account1234",
+					"foo.net",
+					"token1234",
+					withMockSDKClient,
+				)
+				g.Expect(err).NotTo(HaveOccurred())
+
+				existingRecord := client.BuildDNSARecord("bar", "5.5.5.5")
+
+				err = configrmocks.AddObjectReturns(
+					"DNSRecords",
+					[]sdk.DNSRecord{
+						existingRecord.ToCloudFlareDNSRecord(),
+					},
+				)
+				g.Expect(err).NotTo(HaveOccurred())
+
+				err = client.ApplyDNSARecord(ctx, "bar", "1.2.3.4")
+				g.Expect(err).NotTo(HaveOccurred())
+			},
+		},
+		{
+			testCase: "apply deletes existing and updates a new record",
+			runner: func(tt *testing.T) {
+				g := NewGomegaWithT(tt)
+
+				ctx := context.Background()
+
+				client, err := cloudflare.NewClientWithToken(
+					ctx,
+					"account1234",
+					"foo.net",
+					"token1234",
+					withMockSDKClient,
+				)
+				g.Expect(err).NotTo(HaveOccurred())
+
+				deleteRecord := client.BuildDNSARecord("bar", "5.5.5.5")
+				updateRecord := client.BuildDNSARecord("bar", "1.2.3.4")
+				updateRecord.TTL = 4 // set to something else
+
+				err = configrmocks.AddObjectReturns(
+					"DNSRecords",
+					[]sdk.DNSRecord{
+						deleteRecord.ToCloudFlareDNSRecord(),
+						updateRecord.ToCloudFlareDNSRecord(),
+					},
+				)
+				g.Expect(err).NotTo(HaveOccurred())
+
+				err = client.ApplyDNSARecord(ctx, "bar", "1.2.3.4")
+				g.Expect(err).NotTo(HaveOccurred())
+			},
+		},
+		{
+			testCase: "apply deletes existing and leaves correct record in place",
+			runner: func(tt *testing.T) {
+				g := NewGomegaWithT(tt)
+
+				ctx := context.Background()
+
+				client, err := cloudflare.NewClientWithToken(
+					ctx,
+					"account1234",
+					"foo.net",
+					"token1234",
+					withMockSDKClient,
+				)
+				g.Expect(err).NotTo(HaveOccurred())
+
+				deleteRecord := client.BuildDNSARecord("bar", "5.5.5.5")
+				updateRecord := client.BuildDNSARecord("bar", "1.2.3.4")
+
+				err = configrmocks.AddObjectReturns(
+					"DNSRecords",
+					[]sdk.DNSRecord{
+						deleteRecord.ToCloudFlareDNSRecord(),
+						updateRecord.ToCloudFlareDNSRecord(),
+					},
+				)
+				g.Expect(err).NotTo(HaveOccurred())
+
+				err = client.ApplyDNSARecord(ctx, "bar", "1.2.3.4")
+				g.Expect(err).NotTo(HaveOccurred())
+			},
+		},
+		{
+			testCase: "reports error updating a new record",
+			runner: func(tt *testing.T) {
+				g := NewGomegaWithT(tt)
+
+				ctx := context.Background()
+
+				client, err := cloudflare.NewClientWithToken(
+					ctx,
+					"account1234",
+					"foo.net",
+					"token1234",
+					withMockSDKClient,
+				)
+				g.Expect(err).NotTo(HaveOccurred())
+
+				updateRecord := client.BuildDNSARecord("bar", "1.2.3.4")
+				updateRecord.TTL = 4 // set to something else
+
+				err = configrmocks.AddObjectReturns(
+					"DNSRecords",
+					[]sdk.DNSRecord{
+						updateRecord.ToCloudFlareDNSRecord(),
+					},
+				)
+				g.Expect(err).NotTo(HaveOccurred())
+
+				err = configrmocks.AddErrorReturns(
+					"UpdateDNSRecord",
+					fmt.Errorf("baz"),
+				)
+				g.Expect(err).NotTo(HaveOccurred())
+
+				err = client.ApplyDNSARecord(ctx, "bar", "1.2.3.4")
+				g.Expect(err).To(MatchError("baz"))
+			},
+		},
+		{
+			testCase: "reports error deleting while applying a new record",
+			runner: func(tt *testing.T) {
+				g := NewGomegaWithT(tt)
+
+				ctx := context.Background()
+
+				client, err := cloudflare.NewClientWithToken(
+					ctx,
+					"account1234",
+					"foo.net",
+					"token1234",
+					withMockSDKClient,
+				)
+				g.Expect(err).NotTo(HaveOccurred())
+
+				existingRecord := client.BuildDNSARecord("bar", "5.5.5.5")
+
+				err = configrmocks.AddObjectReturns(
+					"DNSRecords",
+					[]sdk.DNSRecord{
+						existingRecord.ToCloudFlareDNSRecord(),
+					},
+				)
+				g.Expect(err).NotTo(HaveOccurred())
+
+				err = configrmocks.AddErrorReturns(
+					"DeleteDNSRecord",
+					fmt.Errorf("baz"),
+				)
+				g.Expect(err).NotTo(HaveOccurred())
+
+				err = client.ApplyDNSARecord(ctx, "bar", "1.2.3.4")
+				g.Expect(err).To(MatchError("baz"))
+			},
+		},
+		{
+			testCase: "reports error creating a new record",
+			runner: func(tt *testing.T) {
+				g := NewGomegaWithT(tt)
+
+				ctx := context.Background()
+
+				err := configrmocks.AddObjectReturns(
+					"DNSRecords",
+					[]sdk.DNSRecord{},
+				)
+				g.Expect(err).NotTo(HaveOccurred())
+
+				err = configrmocks.AddErrorReturns(
+					"CreateDNSRecord",
+					fmt.Errorf("baz"),
+				)
+				g.Expect(err).NotTo(HaveOccurred())
+
+				client, err := cloudflare.NewClientWithToken(
+					ctx,
+					"account1234",
+					"foo.net",
+					"token1234",
+					withMockSDKClient,
+				)
+				g.Expect(err).NotTo(HaveOccurred())
+
+				err = client.ApplyDNSARecord(ctx, "bar", "1.2.3.4")
+				g.Expect(err).To(MatchError("baz"))
+			},
+		},
+		{
+			testCase: "reports error listing existing records",
+			runner: func(tt *testing.T) {
+				g := NewGomegaWithT(tt)
+
+				ctx := context.Background()
+
+				err := configrmocks.AddErrorReturns(
+					"DNSRecords",
+					fmt.Errorf("boo"),
+				)
+				g.Expect(err).NotTo(HaveOccurred())
+
+				client, err := cloudflare.NewClientWithToken(
+					ctx,
+					"account1234",
+					"foo.net",
+					"token1234",
+					withMockSDKClient,
+				)
+				g.Expect(err).NotTo(HaveOccurred())
+
+				err = client.ApplyDNSARecord(ctx, "bar", "1.2.3.4")
+				g.Expect(err).To(MatchError("boo"))
 			},
 		},
 	}

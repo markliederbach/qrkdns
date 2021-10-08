@@ -11,8 +11,8 @@ import (
 
 // DefaultClient implements the cloudflare client
 type DefaultClient struct {
-	Client *sdk.API
-	// Client     SDKClient
+	// Client *sdk.API
+	Client     SDKClient
 	AccountID  string
 	DomainName string
 	ZoneID     string
@@ -152,9 +152,7 @@ func (c *DefaultClient) ApplyDNSARecord(ctx context.Context, subdomain, ipAddres
 
 	existingRecords := ConvertDNSRecordList(sdkRecords)
 
-	if len(existingRecords) == 0 {
-		return c.CreateDNSARecord(ctx, expectedRecord)
-	}
+	createNewRecord := true
 
 	for _, record := range existingRecords {
 		existingRecordLog := contextLog.WithField("existing_record", record)
@@ -168,16 +166,22 @@ func (c *DefaultClient) ApplyDNSARecord(ctx context.Context, subdomain, ipAddres
 		}
 
 		if record.Equal(expectedRecord) {
+			createNewRecord = false
 			existingRecordLog.Debugf("Record is already up to date")
 			continue
 		}
 
+		createNewRecord = false
 		existingRecordLog.Debugf("Updating record")
 		err = c.UpdateDNSARecord(ctx, record.ID, expectedRecord)
 		if err != nil {
 			return err
 		}
 	}
+	if createNewRecord {
+		return c.CreateDNSARecord(ctx, expectedRecord)
+	}
+
 	return nil
 }
 
@@ -195,11 +199,6 @@ func (c *DefaultClient) BuildDNSARecord(subdomain, ipAddress string) DNSRecord {
 // fqdn concatenates a subdomain name with the base domain and returns the FQDN
 func (c *DefaultClient) fqdn(subdomain string) string {
 	return fmt.Sprintf("%v.%v", subdomain, c.DomainName)
-}
-
-// boolPtr converts a bool to a pointer, because that's what Cloudflare wants
-func (c *DefaultClient) boolPtr(val bool) *bool {
-	return &val
 }
 
 // ConvertDNSRecordList converts a list of Cloudflare DNS records to
