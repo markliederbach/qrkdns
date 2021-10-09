@@ -14,17 +14,18 @@ var (
 	// Assert mock client matches the correct interface
 	_ cloudflare.SDKClient = &MockCloudflareSDKClient{}
 
-	// DefaultDNSRecords is used as the default option for the corresponding function
-	DefaultDNSRecords []sdk.DNSRecord = []sdk.DNSRecord{
-		{
-			ID:       "1234",
-			Type:     "TXT",
-			Name:     "test",
-			Content:  "foobar",
-			ZoneID:   "zone1234",
-			ZoneName: "qrkdns.net",
-		},
+	// DefaultDNSRecord is used as the default option for the corresponding function
+	DefaultDNSRecord sdk.DNSRecord = sdk.DNSRecord{
+		ID:       "1234",
+		Type:     "TXT",
+		Name:     "test",
+		Content:  "foobar",
+		ZoneID:   "zone1234",
+		ZoneName: "qrkdns.net",
 	}
+
+	// DefaultDNSRecords is used as the default option for the corresponding function
+	DefaultDNSRecords []sdk.DNSRecord = []sdk.DNSRecord{DefaultDNSRecord}
 
 	// DefaultZoneID is used as the default option for the corresponding function
 	DefaultZoneID string = "zone1234"
@@ -84,7 +85,7 @@ func (c *MockCloudflareSDKClient) CreateDNSRecord(ctx context.Context, zoneID st
 	case *sdk.DNSRecordResponse:
 		return obj, err
 	default:
-		return &sdk.DNSRecordResponse{}, err
+		return &sdk.DNSRecordResponse{Result: DefaultDNSRecord}, err
 	}
 }
 

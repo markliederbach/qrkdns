@@ -110,13 +110,13 @@ func (c *DefaultClient) ListDNSARecords(ctx context.Context, subdomain string) (
 }
 
 // CreateDNSARecord creates a new DNS A record for the provided subdomain and IP Address
-func (c *DefaultClient) CreateDNSARecord(ctx context.Context, record DNSRecord) error {
-	_, err := c.Client.CreateDNSRecord(ctx, c.ZoneID, record.ToCloudFlareDNSRecord())
+func (c *DefaultClient) CreateDNSARecord(ctx context.Context, record DNSRecord) (DNSRecord, error) {
+	response, err := c.Client.CreateDNSRecord(ctx, c.ZoneID, record.ToCloudFlareDNSRecord())
 	if err != nil {
-		return err
+		return DNSRecord{}, err
 	}
 
-	return nil
+	return FromCloudFlareDNSRecord(response.Result), nil
 }
 
 // UpdateDNSARecord updates an existing DNS A record for the provided subdomain and IP Address
@@ -141,48 +141,50 @@ func (c *DefaultClient) DeleteDNSARecord(ctx context.Context, record DNSRecord) 
 
 // ApplyDNSARecord creates or updates a DNS record without creating a duplicate. It will also delete
 // other A records for the domain that don't match the provided IP address
-func (c *DefaultClient) ApplyDNSARecord(ctx context.Context, subdomain, ipAddress string) error {
+func (c *DefaultClient) ApplyDNSARecord(ctx context.Context, subdomain, ipAddress string) (DNSRecord, error) {
 	expectedRecord := c.BuildDNSARecord(subdomain, ipAddress)
 	contextLog := log.WithField("record", expectedRecord)
 
 	sdkRecords, err := c.ListDNSARecords(ctx, subdomain)
 	if err != nil {
-		return err
+		return DNSRecord{}, err
 	}
 
 	existingRecords := ConvertDNSRecordList(sdkRecords)
 
-	createNewRecord := true
+	foundRecord := DNSRecord{}
 
 	for _, record := range existingRecords {
 		existingRecordLog := contextLog.WithField("existing_record", record)
-		if record.Content != ipAddress {
-			existingRecordLog.Debugf("Deleting record")
+		if !foundRecord.Equal(DNSRecord{}) {
+			// Delete extra records
+			existingRecordLog.Debugf("Deleting extra record")
 			err = c.DeleteDNSARecord(ctx, record)
 			if err != nil {
-				return err
+				return DNSRecord{}, err
 			}
 			continue
 		}
 
 		if record.Equal(expectedRecord) {
-			createNewRecord = false
+			foundRecord = record
 			existingRecordLog.Debugf("Record is already up to date")
 			continue
 		}
 
-		createNewRecord = false
 		existingRecordLog.Debugf("Updating record")
 		err = c.UpdateDNSARecord(ctx, record.ID, expectedRecord)
 		if err != nil {
-			return err
+			return DNSRecord{}, err
 		}
+		foundRecord = record
 	}
-	if createNewRecord {
+
+	if foundRecord.Equal(DNSRecord{}) {
 		return c.CreateDNSARecord(ctx, expectedRecord)
 	}
 
-	return nil
+	return foundRecord, nil
 }
 
 // BuildDNSARecord constructs a consistent DNS record across the client

@@ -167,42 +167,23 @@ func TestFile(t *testing.T) {
 				)
 				g.Expect(err).NotTo(HaveOccurred())
 
-				err = client.ApplyDNSARecord(ctx, "bar", "1.2.3.4")
-				g.Expect(err).NotTo(HaveOccurred())
-			},
-		},
-		{
-			testCase: "apply deletes existing and creates a new record",
-			runner: func(tt *testing.T) {
-				g := NewGomegaWithT(tt)
-
-				ctx := context.Background()
-
-				client, err := cloudflare.NewClientWithToken(
-					ctx,
-					"account1234",
-					"foo.net",
-					"token1234",
-					withMockSDKClient,
-				)
-				g.Expect(err).NotTo(HaveOccurred())
-
-				existingRecord := client.BuildDNSARecord("bar", "5.5.5.5")
+				expectedRecord := client.BuildDNSARecord("foo", "9.9.9.9")
 
 				err = configrmocks.AddObjectReturns(
-					"DNSRecords",
-					[]sdk.DNSRecord{
-						existingRecord.ToCloudFlareDNSRecord(),
+					"CreateDNSRecord",
+					&sdk.DNSRecordResponse{
+						Result: expectedRecord.ToCloudFlareDNSRecord(),
 					},
 				)
 				g.Expect(err).NotTo(HaveOccurred())
 
-				err = client.ApplyDNSARecord(ctx, "bar", "1.2.3.4")
+				record, err := client.ApplyDNSARecord(ctx, "bar", "1.2.3.4")
 				g.Expect(err).NotTo(HaveOccurred())
+				g.Expect(record).To(Equal(expectedRecord))
 			},
 		},
 		{
-			testCase: "apply deletes existing and updates a new record",
+			testCase: "apply updates existing record and deletes others",
 			runner: func(tt *testing.T) {
 				g := NewGomegaWithT(tt)
 
@@ -217,21 +198,25 @@ func TestFile(t *testing.T) {
 				)
 				g.Expect(err).NotTo(HaveOccurred())
 
-				deleteRecord := client.BuildDNSARecord("bar", "5.5.5.5")
-				updateRecord := client.BuildDNSARecord("bar", "1.2.3.4")
-				updateRecord.TTL = 4 // set to something else
+				updateRecord := client.BuildDNSARecord("bar", "5.5.5.5")
+				updateRecord.ID = "foo"
+				deleteRecord := client.BuildDNSARecord("bar", "4.3.2.1")
 
 				err = configrmocks.AddObjectReturns(
 					"DNSRecords",
 					[]sdk.DNSRecord{
-						deleteRecord.ToCloudFlareDNSRecord(),
 						updateRecord.ToCloudFlareDNSRecord(),
+						deleteRecord.ToCloudFlareDNSRecord(),
 					},
 				)
 				g.Expect(err).NotTo(HaveOccurred())
 
-				err = client.ApplyDNSARecord(ctx, "bar", "1.2.3.4")
+				record, err := client.ApplyDNSARecord(ctx, "bar", "1.2.3.4")
 				g.Expect(err).NotTo(HaveOccurred())
+
+				// Mock won't actually update IP, so we just
+				// expect the mocked value we passed in
+				g.Expect(record).To(Equal(updateRecord))
 			},
 		},
 		{
@@ -250,20 +235,21 @@ func TestFile(t *testing.T) {
 				)
 				g.Expect(err).NotTo(HaveOccurred())
 
+				equalRecord := client.BuildDNSARecord("bar", "1.2.3.4")
 				deleteRecord := client.BuildDNSARecord("bar", "5.5.5.5")
-				updateRecord := client.BuildDNSARecord("bar", "1.2.3.4")
 
 				err = configrmocks.AddObjectReturns(
 					"DNSRecords",
 					[]sdk.DNSRecord{
+						equalRecord.ToCloudFlareDNSRecord(),
 						deleteRecord.ToCloudFlareDNSRecord(),
-						updateRecord.ToCloudFlareDNSRecord(),
 					},
 				)
 				g.Expect(err).NotTo(HaveOccurred())
 
-				err = client.ApplyDNSARecord(ctx, "bar", "1.2.3.4")
+				record, err := client.ApplyDNSARecord(ctx, "bar", "1.2.3.4")
 				g.Expect(err).NotTo(HaveOccurred())
+				g.Expect(record).To(Equal(equalRecord))
 			},
 		},
 		{
@@ -299,7 +285,7 @@ func TestFile(t *testing.T) {
 				)
 				g.Expect(err).NotTo(HaveOccurred())
 
-				err = client.ApplyDNSARecord(ctx, "bar", "1.2.3.4")
+				_, err = client.ApplyDNSARecord(ctx, "bar", "1.2.3.4")
 				g.Expect(err).To(MatchError("baz"))
 			},
 		},
@@ -320,11 +306,13 @@ func TestFile(t *testing.T) {
 				g.Expect(err).NotTo(HaveOccurred())
 
 				existingRecord := client.BuildDNSARecord("bar", "5.5.5.5")
+				deleteRecord := client.BuildDNSARecord("bar", "5.5.5.6")
 
 				err = configrmocks.AddObjectReturns(
 					"DNSRecords",
 					[]sdk.DNSRecord{
 						existingRecord.ToCloudFlareDNSRecord(),
+						deleteRecord.ToCloudFlareDNSRecord(),
 					},
 				)
 				g.Expect(err).NotTo(HaveOccurred())
@@ -335,7 +323,7 @@ func TestFile(t *testing.T) {
 				)
 				g.Expect(err).NotTo(HaveOccurred())
 
-				err = client.ApplyDNSARecord(ctx, "bar", "1.2.3.4")
+				_, err = client.ApplyDNSARecord(ctx, "bar", "1.2.3.4")
 				g.Expect(err).To(MatchError("baz"))
 			},
 		},
@@ -367,7 +355,7 @@ func TestFile(t *testing.T) {
 				)
 				g.Expect(err).NotTo(HaveOccurred())
 
-				err = client.ApplyDNSARecord(ctx, "bar", "1.2.3.4")
+				_, err = client.ApplyDNSARecord(ctx, "bar", "1.2.3.4")
 				g.Expect(err).To(MatchError("baz"))
 			},
 		},
@@ -393,7 +381,7 @@ func TestFile(t *testing.T) {
 				)
 				g.Expect(err).NotTo(HaveOccurred())
 
-				err = client.ApplyDNSARecord(ctx, "bar", "1.2.3.4")
+				_, err = client.ApplyDNSARecord(ctx, "bar", "1.2.3.4")
 				g.Expect(err).To(MatchError("boo"))
 			},
 		},

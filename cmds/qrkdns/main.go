@@ -32,7 +32,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = cloudflareClient.ApplyDNSARecord(ctx, conf.NetworkID, externalIP)
+	_, err = cloudflareClient.ApplyDNSARecord(ctx, conf.NetworkID, externalIP)
 	if err != nil {
 		log.Fatal(err)
 	}
