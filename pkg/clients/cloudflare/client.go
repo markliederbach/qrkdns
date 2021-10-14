@@ -109,6 +109,16 @@ func (c *DefaultClient) ListDNSARecords(ctx context.Context, subdomain string) (
 	return records, nil
 }
 
+// GetDNSRecord retrieves a DNS record by ID
+func (c *DefaultClient) GetDNSRecord(ctx context.Context, recordID string) (DNSRecord, error) {
+	response, err := c.Client.DNSRecord(ctx, c.ZoneID, recordID)
+	if err != nil {
+		return DNSRecord{}, err
+	}
+
+	return FromCloudFlareDNSRecord(response), nil
+}
+
 // CreateDNSARecord creates a new DNS A record for the provided subdomain and IP Address
 func (c *DefaultClient) CreateDNSARecord(ctx context.Context, record DNSRecord) (DNSRecord, error) {
 	response, err := c.Client.CreateDNSRecord(ctx, c.ZoneID, record.ToCloudFlareDNSRecord())
@@ -152,39 +162,64 @@ func (c *DefaultClient) ApplyDNSARecord(ctx context.Context, subdomain, ipAddres
 
 	existingRecords := ConvertDNSRecordList(sdkRecords)
 
-	foundRecord := DNSRecord{}
+	chosenRecord := DNSRecord{}
 
+	// First, look for any record with a matching IP address because
+	// Cloudflare's unique key is (name, content)
 	for _, record := range existingRecords {
 		existingRecordLog := contextLog.WithField("existing_record", record)
-		if !foundRecord.Equal(DNSRecord{}) {
-			// Delete extra records
-			existingRecordLog.Debugf("Deleting extra record")
-			err = c.DeleteDNSARecord(ctx, record)
+		if record.Content == ipAddress {
+			existingRecordLog.Debugf("Reusing found record")
+			chosenRecord = record
+			break
+		}
+	}
+
+	// If we found a matching record, check if it needs to be updated
+	if !chosenRecord.Equal(DNSRecord{}, false) {
+
+		contextLog = contextLog.WithField("chosen_record", chosenRecord)
+
+		if !chosenRecord.Equal(expectedRecord, false) {
+			contextLog.Debugf("Updating record")
+			err = c.UpdateDNSARecord(ctx, chosenRecord.ID, expectedRecord)
 			if err != nil {
 				return DNSRecord{}, err
 			}
-			continue
-		}
 
-		if record.Equal(expectedRecord) {
-			foundRecord = record
-			existingRecordLog.Debugf("Record is already up to date")
-			continue
+			// Update local copy of record
+			chosenRecord, err = c.GetDNSRecord(ctx, chosenRecord.ID)
+			if err != nil {
+				return DNSRecord{}, err
+			}
+		} else {
+			contextLog.Debugf("Record is already up to date")
 		}
-
-		existingRecordLog.Debugf("Updating record")
-		err = c.UpdateDNSARecord(ctx, record.ID, expectedRecord)
+	} else {
+		// Otherwise, we need to create a new record
+		contextLog.Debugf("Creating new record")
+		chosenRecord, err = c.CreateDNSARecord(ctx, expectedRecord)
 		if err != nil {
 			return DNSRecord{}, err
 		}
-		foundRecord = record
+		contextLog = contextLog.WithField("chosen_record", chosenRecord)
 	}
 
-	if foundRecord.Equal(DNSRecord{}) {
-		return c.CreateDNSARecord(ctx, expectedRecord)
+	// At this point, we've either updated or created an new record
+	// with the correct data. All other records should be removed.
+	for _, record := range existingRecords {
+		if record.ID == chosenRecord.ID {
+			// Skip the record we've chosen to manage
+			continue
+		}
+
+		err = c.DeleteDNSARecord(ctx, record)
+		if err != nil {
+			return DNSRecord{}, err
+		}
 	}
 
-	return foundRecord, nil
+	return chosenRecord, nil
 }
 
 // BuildDNSARecord constructs a consistent DNS record across the client
@@ -240,8 +275,10 @@ func (d *DNSRecord) ToCloudFlareDNSRecord() sdk.DNSRecord {
 }
 
 // Equal checks whether two records are equal (except for unmanaged fields)
-func (d *DNSRecord) Equal(other DNSRecord) bool {
-	// Temporarily copy ID
-	other.ID = d.ID
+func (d *DNSRecord) Equal(other DNSRecord, matchID bool) bool {
+	if !matchID {
+		// Temporarily copy ID
+		other.ID = d.ID
+	}
 	return reflect.DeepEqual(*d, other)
 }

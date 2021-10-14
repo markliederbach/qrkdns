@@ -22,6 +22,7 @@ var (
 		Content:  "foobar",
 		ZoneID:   "zone1234",
 		ZoneName: "qrkdns.net",
+		Proxied:  boolPtr(false),
 	}
 
 	// DefaultDNSRecords is used as the default option for the corresponding function
@@ -38,6 +39,7 @@ func init() {
 	sdkFunctions := []string{
 		"ZoneIDByName",
 		"DNSRecords",
+		"DNSRecord",
 		"CreateDNSRecord",
 		"UpdateDNSRecord",
 		"DeleteDNSRecord",
@@ -76,6 +78,19 @@ func (c *MockCloudflareSDKClient) DNSRecords(ctx context.Context, zoneID string,
 	}
 }
 
+// DNSRecord implements corresponding client function
+func (c *MockCloudflareSDKClient) DNSRecord(ctx context.Context, zoneID string, recordID string) (sdk.DNSRecord, error) {
+	functionName := "DNSRecord"
+	obj := configrmocks.GetObject(functionName)
+	err := mocks.GetError(functionName)
+	switch obj := obj.(type) {
+	case sdk.DNSRecord:
+		return obj, err
+	default:
+		return DefaultDNSRecord, err
+	}
+}
+
 // CreateDNSRecord implements corresponding client function
 func (c *MockCloudflareSDKClient) CreateDNSRecord(ctx context.Context, zoneID string, rr sdk.DNSRecord) (*sdk.DNSRecordResponse, error) {
 	functionName := "CreateDNSRecord"
@@ -101,4 +116,8 @@ func (c *MockCloudflareSDKClient) DeleteDNSRecord(ctx context.Context, zoneID st
 	functionName := "DeleteDNSRecord"
 	err := mocks.GetError(functionName)
 	return err
+}
+
+func boolPtr(val bool) *bool {
+	return &val
 }
