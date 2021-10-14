@@ -52,7 +52,8 @@ func TestFile(t *testing.T) {
 
 				ctx := context.Background()
 
-				configrmocks.AddObjectReturns("ZoneIDByName", "newzone")
+				err := configrmocks.AddObjectReturns("ZoneIDByName", "newzone")
+				g.Expect(err).NotTo(HaveOccurred())
 
 				client, err := cloudflare.NewClientWithToken(
 					ctx,
@@ -111,9 +112,10 @@ func TestFile(t *testing.T) {
 
 				ctx := context.Background()
 
-				configrmocks.AddErrorReturns("ZoneIDByName", fmt.Errorf("no no no"))
+				err := configrmocks.AddErrorReturns("ZoneIDByName", fmt.Errorf("no no no"))
+				g.Expect(err).NotTo(HaveOccurred())
 
-				_, err := cloudflare.NewClientWithToken(
+				_, err = cloudflare.NewClientWithToken(
 					ctx,
 					"account1234",
 					"foo.net",
@@ -139,7 +141,8 @@ func TestFile(t *testing.T) {
 				)
 				g.Expect(err).NotTo(HaveOccurred())
 
-				configrmocks.AddErrorReturns("DNSRecords", fmt.Errorf("nope"))
+				err = configrmocks.AddErrorReturns("DNSRecords", fmt.Errorf("nope"))
+				g.Expect(err).NotTo(HaveOccurred())
 
 				_, err = client.ListDNSARecords(ctx, "bar")
 				g.Expect(err).To(MatchError("nope"))

@@ -51,7 +51,8 @@ func TestFile(t *testing.T) {
 				client, err := newMockIPClient()
 				g.Expect(err).NotTo(HaveOccurred())
 
-				configrmocks.AddErrorReturns("Get", fmt.Errorf("oh no"))
+				err = configrmocks.AddErrorReturns("Get", fmt.Errorf("oh no"))
+				g.Expect(err).NotTo(HaveOccurred())
 
 				_, err = client.GetExternalIPAddress(ctx)
 				g.Expect(err).To(MatchError("oh no"))
@@ -65,13 +66,15 @@ func TestFile(t *testing.T) {
 				client, err := newMockIPClient()
 				g.Expect(err).NotTo(HaveOccurred())
 
-				configrmocks.AddObjectReturns(
+				err = configrmocks.AddObjectReturns(
 					"Get",
 					&http.Response{
 						StatusCode: 200,
 						Body:       &mocks.ErrorReader{Error: fmt.Errorf("error reader")},
 					},
 				)
+				g.Expect(err).NotTo(HaveOccurred())
+
 				_, err = client.GetExternalIPAddress(ctx)
 				g.Expect(err).To(MatchError("error reader"))
 			},
@@ -84,13 +87,15 @@ func TestFile(t *testing.T) {
 				client, err := newMockIPClient()
 				g.Expect(err).NotTo(HaveOccurred())
 
-				configrmocks.AddObjectReturns(
+				err = configrmocks.AddObjectReturns(
 					"Get",
 					&http.Response{
 						StatusCode: 200,
 						Body:       &mocks.ErrorReader{Error: fmt.Errorf("error reader")},
 					},
 				)
+				g.Expect(err).NotTo(HaveOccurred())
+
 				_, err = client.GetExternalIPAddress(ctx)
 				g.Expect(err).To(MatchError("error reader"))
 			},
@@ -103,13 +108,15 @@ func TestFile(t *testing.T) {
 				client, err := newMockIPClient()
 				g.Expect(err).NotTo(HaveOccurred())
 
-				configrmocks.AddObjectReturns(
+				err = configrmocks.AddObjectReturns(
 					"Get",
 					&http.Response{
 						StatusCode: 404,
 						Body:       io.NopCloser(strings.NewReader("foo")),
 					},
 				)
+				g.Expect(err).NotTo(HaveOccurred())
+
 				_, err = client.GetExternalIPAddress(ctx)
 				g.Expect(err).To(HaveOccurred())
 			},
