@@ -136,10 +136,10 @@ tasks:
         new="v$major.$minor.$patch"
         echo "[Current] v$current -> [New] $new"
     preconditions:
-      # - sh: "[[ $(git rev-parse --abbrev-ref HEAD) == 'main' ]]"
-      #   msg: Must be on main to push a tag
-      # - sh: "git diff --quiet"
-      #   msg: No uncommmitted files allowed before publishing
+      - sh: "[[ $(git rev-parse --abbrev-ref HEAD) == 'main' ]]"
+        msg: Must be on main to push a tag
+      - sh: "git diff --quiet"
+        msg: No uncommmitted files allowed before publishing
       - sh: "[ '{{.CHANGE_TYPE}}' != 'nil' ]"
         msg: Must run one of `task bump:[major, minor, patch]`
     silent: true
