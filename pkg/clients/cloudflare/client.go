@@ -153,7 +153,7 @@ func (c *DefaultClient) DeleteDNSARecord(ctx context.Context, record DNSRecord) 
 // other A records for the domain that don't match the provided IP address
 func (c *DefaultClient) ApplyDNSARecord(ctx context.Context, subdomain, ipAddress string) (DNSRecord, error) {
 	expectedRecord := BuildDNSARecord(subdomain, c.DomainName, ipAddress)
-	contextLog := log.WithField("record", expectedRecord)
+	contextLog := log.WithField("expected_record", expectedRecord)
 
 	sdkRecords, err := c.ListDNSARecords(ctx, subdomain)
 	if err != nil {
@@ -212,7 +212,7 @@ func (c *DefaultClient) ApplyDNSARecord(ctx context.Context, subdomain, ipAddres
 			// Skip the record we've chosen to manage
 			continue
 		}
-
+		contextLog.WithField("existing_record", record).Debugf("Deleting extra record")
 		err = c.DeleteDNSARecord(ctx, record)
 		if err != nil {
 			return DNSRecord{}, err
