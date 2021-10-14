@@ -3,10 +3,11 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 jobs:
   release:
+    # TODO: migrate to goreleaser and docker builder
     name: Create Release
     runs-on: ubuntu-latest
     steps:
