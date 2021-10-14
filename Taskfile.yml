@@ -135,6 +135,7 @@ tasks:
         esac
         new="v$major.$minor.$patch"
         echo "[Current] v$current -> [New] $new"
+        git tag $new && git push origin $new
     preconditions:
       - sh: "[[ $(git rev-parse --abbrev-ref HEAD) == 'main' ]]"
         msg: Must be on main to push a tag
