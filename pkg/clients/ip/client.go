@@ -15,12 +15,21 @@ type DefaultClient struct {
 	Client HTTPClient
 }
 
+// LoadOption allows for modifying the client after it's created
+type LoadOption func(client *DefaultClient) error
+
 // NewClient returns a new ip address client
-func NewClient(ipServiceURL string) DefaultClient {
-	return DefaultClient{
+func NewClient(ipServiceURL string, opts ...LoadOption) (DefaultClient, error) {
+	client := DefaultClient{
 		IPServiceURL: ipServiceURL,
 		Client:       &http.Client{},
 	}
+	for _, opt := range opts {
+		if err := opt(&client); err != nil {
+			return DefaultClient{}, err
+		}
+	}
+	return client, nil
 }
 
 // GetExternalIPAddress returns the preferred outbound IP address used by this machine

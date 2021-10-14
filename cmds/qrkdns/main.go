@@ -9,11 +9,18 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var (
+	// CloudflareClientOptions is used by testing to inject a mock client option
+	CloudflareClientOptions = []cloudflare.LoadOption{}
+	// IPClientOptions is used by testing to inject a mock client option
+	IPClientOptions = []ip.LoadOption{}
+)
+
 func main() {
 	ctx := context.TODO()
 	conf, err := config.Load()
 	if err != nil {
-		log.Fatal(err)
+		log.Panic(err)
 	}
 
 	cloudflareClient, err := cloudflare.NewClientWithToken(
@@ -21,20 +28,25 @@ func main() {
 		conf.CloudFlareAccountID,
 		conf.DomainName,
 		conf.CloudFlareAPIToken,
+		CloudflareClientOptions...,
 	)
 	if err != nil {
-		log.Fatal(err)
+		log.Panic(err)
 	}
 
-	ipClient := ip.NewClient(conf.IPServiceURL)
+	ipClient, err := ip.NewClient(conf.IPServiceURL, IPClientOptions...)
+	if err != nil {
+		log.Panic(err)
+	}
+
 	externalIP, err := ipClient.GetExternalIPAddress(ctx)
 	if err != nil {
-		log.Fatal(err)
+		log.Panic(err)
 	}
 
 	_, err = cloudflareClient.ApplyDNSARecord(ctx, conf.NetworkID, externalIP)
 	if err != nil {
-		log.Fatal(err)
+		log.Panic(err)
 	}
 
 	log.Infof("Sync complete")

@@ -167,7 +167,7 @@ func TestFile(t *testing.T) {
 				)
 				g.Expect(err).NotTo(HaveOccurred())
 
-				expectedRecord := client.BuildDNSARecord("foo", "9.9.9.9")
+				expectedRecord := cloudflare.BuildDNSARecord("foo", "foo.net", "9.9.9.9")
 
 				err = configrmocks.AddObjectReturns(
 					"CreateDNSRecord",
@@ -198,10 +198,10 @@ func TestFile(t *testing.T) {
 				)
 				g.Expect(err).NotTo(HaveOccurred())
 
-				updateRecord := client.BuildDNSARecord("bar", "1.2.3.4")
+				updateRecord := cloudflare.BuildDNSARecord("bar", "foo.net", "1.2.3.4")
 				updateRecord.TTL = 9
 				updateRecord.ID = "foo"
-				deleteRecord := client.BuildDNSARecord("bar", "4.3.2.1")
+				deleteRecord := cloudflare.BuildDNSARecord("bar", "foo.net", "4.3.2.1")
 
 				err = configrmocks.AddObjectReturns(
 					"DNSRecords",
@@ -242,8 +242,8 @@ func TestFile(t *testing.T) {
 				)
 				g.Expect(err).NotTo(HaveOccurred())
 
-				equalRecord := client.BuildDNSARecord("bar", "1.2.3.4")
-				deleteRecord := client.BuildDNSARecord("bar", "5.5.5.5")
+				equalRecord := cloudflare.BuildDNSARecord("bar", "foo.net", "1.2.3.4")
+				deleteRecord := cloudflare.BuildDNSARecord("bar", "foo.net", "5.5.5.5")
 
 				err = configrmocks.AddObjectReturns(
 					"DNSRecords",
@@ -275,7 +275,7 @@ func TestFile(t *testing.T) {
 				)
 				g.Expect(err).NotTo(HaveOccurred())
 
-				updateRecord := client.BuildDNSARecord("bar", "1.2.3.4")
+				updateRecord := cloudflare.BuildDNSARecord("bar", "foo.net", "1.2.3.4")
 				updateRecord.TTL = 4 // set to something else
 
 				err = configrmocks.AddObjectReturns(
@@ -312,7 +312,7 @@ func TestFile(t *testing.T) {
 				)
 				g.Expect(err).NotTo(HaveOccurred())
 
-				updateRecord := client.BuildDNSARecord("bar", "1.2.3.4")
+				updateRecord := cloudflare.BuildDNSARecord("bar", "foo.net", "1.2.3.4")
 				updateRecord.TTL = 4 // set to something else
 
 				err = configrmocks.AddObjectReturns(
@@ -349,8 +349,8 @@ func TestFile(t *testing.T) {
 				)
 				g.Expect(err).NotTo(HaveOccurred())
 
-				existingRecord := client.BuildDNSARecord("bar", "5.5.5.5")
-				deleteRecord := client.BuildDNSARecord("bar", "5.5.5.6")
+				existingRecord := cloudflare.BuildDNSARecord("bar", "foo.net", "5.5.5.5")
+				deleteRecord := cloudflare.BuildDNSARecord("bar", "foo.net", "5.5.5.6")
 
 				err = configrmocks.AddObjectReturns(
 					"DNSRecords",

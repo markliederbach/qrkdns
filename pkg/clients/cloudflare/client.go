@@ -101,7 +101,7 @@ func (c *DefaultClient) GetZoneID(ctx context.Context) (string, error) {
 
 // ListDNSARecords returns all DNS records for the provided subdomain
 func (c *DefaultClient) ListDNSARecords(ctx context.Context, subdomain string) ([]sdk.DNSRecord, error) {
-	records, err := c.Client.DNSRecords(ctx, c.ZoneID, sdk.DNSRecord{Type: string(RecordTypeA), Name: c.fqdn(subdomain)})
+	records, err := c.Client.DNSRecords(ctx, c.ZoneID, sdk.DNSRecord{Type: string(RecordTypeA), Name: fqdn(subdomain, c.DomainName)})
 	if err != nil {
 		return []sdk.DNSRecord{}, err
 	}
@@ -152,7 +152,7 @@ func (c *DefaultClient) DeleteDNSARecord(ctx context.Context, record DNSRecord) 
 // ApplyDNSARecord creates or updates a DNS record without creating a duplicate. It will also delete
 // other A records for the domain that don't match the provided IP address
 func (c *DefaultClient) ApplyDNSARecord(ctx context.Context, subdomain, ipAddress string) (DNSRecord, error) {
-	expectedRecord := c.BuildDNSARecord(subdomain, ipAddress)
+	expectedRecord := BuildDNSARecord(subdomain, c.DomainName, ipAddress)
 	contextLog := log.WithField("record", expectedRecord)
 
 	sdkRecords, err := c.ListDNSARecords(ctx, subdomain)
@@ -223,10 +223,10 @@ func (c *DefaultClient) ApplyDNSARecord(ctx context.Context, subdomain, ipAddres
 }
 
 // BuildDNSARecord constructs a consistent DNS record across the client
-func (c *DefaultClient) BuildDNSARecord(subdomain, ipAddress string) DNSRecord {
+func BuildDNSARecord(subdomain, domainName, ipAddress string) DNSRecord {
 	return DNSRecord{
 		Type:    RecordTypeA,
-		Name:    c.fqdn(subdomain),
+		Name:    fqdn(subdomain, domainName),
 		Content: ipAddress,
 		TTL:     1,
 		Proxied: false,
@@ -234,8 +234,8 @@ func (c *DefaultClient) BuildDNSARecord(subdomain, ipAddress string) DNSRecord {
 }
 
 // fqdn concatenates a subdomain name with the base domain and returns the FQDN
-func (c *DefaultClient) fqdn(subdomain string) string {
-	return fmt.Sprintf("%v.%v", subdomain, c.DomainName)
+func fqdn(subdomain, domainName string) string {
+	return fmt.Sprintf("%v.%v", subdomain, domainName)
 }
 
 // ConvertDNSRecordList converts a list of Cloudflare DNS records to

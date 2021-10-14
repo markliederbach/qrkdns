@@ -19,10 +19,13 @@ type testRunner struct {
 	runner   func(tt *testing.T)
 }
 
-func newMockIPClient() ip.DefaultClient {
-	client := ip.NewClient("some_url")
+func newMockIPClient() (ip.DefaultClient, error) {
+	client, err := ip.NewClient("some_url")
+	if err != nil {
+		return ip.DefaultClient{}, err
+	}
 	client.Client = &mocks.MockHTTPClient{}
-	return client
+	return client, nil
 }
 
 func TestFile(t *testing.T) {
@@ -32,7 +35,8 @@ func TestFile(t *testing.T) {
 			runner: func(tt *testing.T) {
 				g := NewGomegaWithT(tt)
 				ctx := context.Background()
-				client := newMockIPClient()
+				client, err := newMockIPClient()
+				g.Expect(err).NotTo(HaveOccurred())
 
 				ipAddress, err := client.GetExternalIPAddress(ctx)
 				g.Expect(err).NotTo(HaveOccurred())
@@ -44,11 +48,12 @@ func TestFile(t *testing.T) {
 			runner: func(tt *testing.T) {
 				g := NewGomegaWithT(tt)
 				ctx := context.Background()
-				client := newMockIPClient()
+				client, err := newMockIPClient()
+				g.Expect(err).NotTo(HaveOccurred())
 
 				configrmocks.AddErrorReturns("Get", fmt.Errorf("oh no"))
 
-				_, err := client.GetExternalIPAddress(ctx)
+				_, err = client.GetExternalIPAddress(ctx)
 				g.Expect(err).To(MatchError("oh no"))
 			},
 		},
@@ -57,7 +62,8 @@ func TestFile(t *testing.T) {
 			runner: func(tt *testing.T) {
 				g := NewGomegaWithT(tt)
 				ctx := context.Background()
-				client := newMockIPClient()
+				client, err := newMockIPClient()
+				g.Expect(err).NotTo(HaveOccurred())
 
 				configrmocks.AddObjectReturns(
 					"Get",
@@ -66,7 +72,7 @@ func TestFile(t *testing.T) {
 						Body:       &mocks.ErrorReader{Error: fmt.Errorf("error reader")},
 					},
 				)
-				_, err := client.GetExternalIPAddress(ctx)
+				_, err = client.GetExternalIPAddress(ctx)
 				g.Expect(err).To(MatchError("error reader"))
 			},
 		},
@@ -75,7 +81,8 @@ func TestFile(t *testing.T) {
 			runner: func(tt *testing.T) {
 				g := NewGomegaWithT(tt)
 				ctx := context.Background()
-				client := newMockIPClient()
+				client, err := newMockIPClient()
+				g.Expect(err).NotTo(HaveOccurred())
 
 				configrmocks.AddObjectReturns(
 					"Get",
@@ -84,7 +91,7 @@ func TestFile(t *testing.T) {
 						Body:       &mocks.ErrorReader{Error: fmt.Errorf("error reader")},
 					},
 				)
-				_, err := client.GetExternalIPAddress(ctx)
+				_, err = client.GetExternalIPAddress(ctx)
 				g.Expect(err).To(MatchError("error reader"))
 			},
 		},
@@ -93,7 +100,8 @@ func TestFile(t *testing.T) {
 			runner: func(tt *testing.T) {
 				g := NewGomegaWithT(tt)
 				ctx := context.Background()
-				client := newMockIPClient()
+				client, err := newMockIPClient()
+				g.Expect(err).NotTo(HaveOccurred())
 
 				configrmocks.AddObjectReturns(
 					"Get",
@@ -102,7 +110,7 @@ func TestFile(t *testing.T) {
 						Body:       io.NopCloser(strings.NewReader("foo")),
 					},
 				)
-				_, err := client.GetExternalIPAddress(ctx)
+				_, err = client.GetExternalIPAddress(ctx)
 				g.Expect(err).To(HaveOccurred())
 			},
 		},
