@@ -1,9 +1,5 @@
 version: "3"
 
-vars:
-  DOTENV:
-    sh: cat .env | grep -v "#" | xargs
-
 tasks:
   deps:
     desc: Install project dependencies
@@ -49,6 +45,9 @@ tasks:
 
   run:
     desc: Run qrkdns
+    vars:
+      DOTENV:
+        sh: cat .env | grep -v "#" | xargs
     cmds:
       - "{{.DOTENV}} go run cmds/qrkdns/main.go"
     silent: true
