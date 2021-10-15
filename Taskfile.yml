@@ -130,7 +130,7 @@ tasks:
     deps:
       - docker:login
     cmds:
-      - docker run --rm --env-file .env ghcr.io/markliederbach/qrkdns:latest
+      - docker run --pull always --rm --env-file .env ghcr.io/markliederbach/qrkdns:latest
 
   goreleaser:check:
     desc: Validate the Goreleaser configuration
