@@ -103,17 +103,34 @@ tasks:
     preconditions:
       - which golangci-lint
 
+  docker:login:
+    desc: Login to ghcr.io
+    cmds:
+      - echo $GITHUB_TOKEN | docker login ghcr.io -u $GITHUB_USERNAME --password-stdin
+    preconditions:
+      - sh: test ! -z "$GITHUB_USERNAME"
+        msg: Must set the GITHUB_USERNAME environment variable
+      - sh: test ! -z "$GITHUB_TOKEN"
+        msg: Must set the GITHUB_TOKEN environment variable
+
   docker:build:local:
     desc: Build the docker image locally
     cmds:
       - docker build --pull --rm -f ./Dockerfile -t qrkdns:latest "."
 
-  docker:run:
+  docker:run:local:
     desc: Run the application locally with provided .env variables
     deps:
       - docker:build:local
     cmds:
       - docker run --env-file .env --rm -it  qrkdns:latest
+
+  docker:run:remote:
+    desc: Run the application from the latest build with provided .env variables
+    deps:
+      - docker:login
+    cmds:
+      - docker run --rm --env-file .env ghcr.io/markliederbach/qrkdns:latest
 
   goreleaser:check:
     desc: Validate the Goreleaser configuration
