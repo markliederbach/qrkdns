@@ -1,0 +1,32 @@
+before:
+  hooks:
+    # You may remove this if you don't use go modules.
+    - go mod tidy
+    # you may remove this if you don't need go generate
+    - go generate ./...
+builds:
+  - id: qrkdns
+    main: ./cmds/qrkdns/main.go
+    binary: qrkdns
+    env:
+      - CGO_ENABLED=0
+    targets:
+      - darwin_amd64
+      - darwin_arm64
+      - linux_386
+      - linux_amd64
+      - linux_arm
+      - linux_arm64
+      - windows_386
+      - windows_amd64
+    ldflags:
+      - -s -w -X main.Version={{.Version}}
+checksum:
+  name_template: "checksums.txt"
+snapshot:
+  name_template: "{{ .Version }}-dev"
+release:
+  github:
+    owner: markliederbach
+    name: qrkdns
+  draft: true

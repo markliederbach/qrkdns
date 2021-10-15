@@ -10,6 +10,8 @@ import (
 )
 
 var (
+	// Version tracks the semantic version of this release
+	Version = "latest"
 	// CloudflareClientOptions is used by testing to inject a mock client option
 	CloudflareClientOptions = []cloudflare.LoadOption{}
 	// IPClientOptions is used by testing to inject a mock client option
@@ -22,6 +24,8 @@ func main() {
 	if err != nil {
 		log.Panic(err)
 	}
+
+	log.WithField("version", Version).Debug("Running qrkdns")
 
 	cloudflareClient, err := cloudflare.NewClientWithToken(
 		ctx,
