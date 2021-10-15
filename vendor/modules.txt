@@ -242,7 +242,7 @@ github.com/cespare/xxhash/v2
 github.com/charithe/durationcheck
 # github.com/chavacava/garif v0.0.0-20210405164556-e8a0a408d6af
 github.com/chavacava/garif
-# github.com/cloudflare/cloudflare-go v0.24.0
+# github.com/cloudflare/cloudflare-go v0.25.0
 ## explicit
 github.com/cloudflare/cloudflare-go
 # github.com/cpuguy83/go-md2man/v2 v2.0.0

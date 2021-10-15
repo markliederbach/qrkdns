@@ -103,6 +103,18 @@ tasks:
     preconditions:
       - which golangci-lint
 
+  docker:build:local:
+    desc: Build the docker image locally
+    cmds:
+      - docker build --pull --rm -f ./Dockerfile -t qrkdns:latest "."
+
+  docker:run:
+    desc: Run the application locally with provided .env variables
+    deps:
+      - docker:build:local
+    cmds:
+      - docker run --env-file .env --rm -it  qrkdns:latest
+
   goreleaser:check:
     desc: Validate the Goreleaser configuration
     cmds:
