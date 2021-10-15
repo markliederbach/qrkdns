@@ -103,6 +103,22 @@ tasks:
     preconditions:
       - which golangci-lint
 
+  goreleaser:check:
+    desc: Validate the Goreleaser configuration
+    cmds:
+      - ${GOPATH}/bin/goreleaser check
+    preconditions:
+      - sh: ${GOPATH}/bin/goreleaser --version
+        msg: Run `task deps` to install Go tools
+
+  goreleaser:build:
+    desc: Build a snapshot locally
+    cmds:
+      - ${GOPATH}/bin/goreleaser build --snapshot --rm-dist
+    preconditions:
+      - sh: ${GOPATH}/bin/goreleaser --version
+        msg: Run `task deps` to install Go tools
+
   bump:
     vars:
       CHANGE_TYPE: '{{default "nil" .CHANGE_TYPE}}'
