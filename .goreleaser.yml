@@ -27,4 +27,3 @@ release:
   github:
     owner: markliederbach
     name: qrkdns
-  draft: true
