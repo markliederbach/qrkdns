@@ -6,9 +6,47 @@ on:
       - "v*"
 
 jobs:
+  lint:
+    name: Linting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Taskfile
+        uses: arduino/setup-task@main
+        with:
+          version: "3.x"
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: "~1.16"
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: Dependencies
+        run: task deps
+      - name: Lint
+        run: task lint
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Taskfile
+        uses: arduino/setup-task@main
+        with:
+          version: "3.x"
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: "~1.16"
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: Dependencies
+        run: task deps
+      - name: Unit Tests
+        run: task test
   release:
-    # TODO: migrate to goreleaser and docker builder
     name: Create Release
+    needs:
+      - lint
+      - unit-tests
     runs-on: ubuntu-latest
     steps:
       - name: Setup Taskfile
@@ -23,10 +61,6 @@ jobs:
         uses: actions/checkout@main
         with:
           fetch-depth: 0
-      - name: Tag name
-        id: tag_name
-        run: |
-          echo ::set-output name=pushed_tag::${GITHUB_REF#refs/tags/}
       - name: GoReleaser
         uses: goreleaser/goreleaser-action@v2
         with:
