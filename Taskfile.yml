@@ -124,14 +124,14 @@ tasks:
     deps:
       - docker:build:local
     cmds:
-      - docker run --env-file .env --rm -it  qrkdns:latest
+      - docker run --env-file .env --rm -it  qrkdns:latest sync
 
   docker:run:remote:
     desc: Run the application from the latest build with provided .env variables
     deps:
       - docker:login
     cmds:
-      - docker run --pull always --rm --env-file .env ghcr.io/markliederbach/qrkdns:latest
+      - docker run --pull always --rm --env-file .env ghcr.io/markliederbach/qrkdns:latest sync
 
   goreleaser:check:
     desc: Validate the Goreleaser configuration
