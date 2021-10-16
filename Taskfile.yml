@@ -149,6 +149,16 @@ tasks:
       - sh: ${GOPATH}/bin/goreleaser --version
         msg: Run `task deps` to install Go tools
 
+  goreleaser:run:
+    desc: Run the local binary produced from goreleaser
+    vars:
+      DOTENV:
+        sh: cat .env | grep -v "#" | xargs
+    deps:
+      - goreleaser:build
+    cmds:
+      - "{{.DOTENV}} ./dist/qrkdns_darwin_amd64/qrkdns sync"
+
   bump:
     vars:
       CHANGE_TYPE: '{{default "nil" .CHANGE_TYPE}}'
