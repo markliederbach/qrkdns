@@ -18,11 +18,6 @@ var (
 	}
 )
 
-const (
-	// LogLevelFlag wraps the name of the command flag
-	LogLevelFlag string = "log-level"
-)
-
 func main() {
 	app := controllers.NewQrkDNSApp(Version, Commands)
 	err := app.Run(os.Args)
