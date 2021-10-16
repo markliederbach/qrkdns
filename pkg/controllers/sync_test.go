@@ -1,4 +1,4 @@
-package controllers
+package controllers_test
 
 import (
 	"fmt"
@@ -8,14 +8,11 @@ import (
 	configrmocks "github.com/markliederbach/configr/mocks"
 	"github.com/markliederbach/qrkdns/pkg/clients/cloudflare"
 	"github.com/markliederbach/qrkdns/pkg/clients/ip"
+	"github.com/markliederbach/qrkdns/pkg/controllers"
 	"github.com/markliederbach/qrkdns/pkg/mocks"
 	. "github.com/onsi/gomega"
+	"github.com/urfave/cli/v2"
 )
-
-type testRunner struct {
-	testCase string
-	runner   func(tt *testing.T)
-}
 
 func withMockSDKClient(client *cloudflare.DefaultClient) error {
 	client.Client = &mocks.MockCloudflareSDKClient{}
@@ -27,15 +24,22 @@ func withMockHTTPClient(client *ip.DefaultClient) error {
 	return nil
 }
 
-func TestMain(t *testing.T) {
-	CloudflareClientOptions = append(
-		CloudflareClientOptions,
+func withFlag(flagName string) string {
+	return fmt.Sprintf("--%v", flagName)
+}
+
+func TestSync(t *testing.T) {
+	controllers.CloudflareClientOptions = append(
+		controllers.CloudflareClientOptions,
 		withMockSDKClient,
 	)
-	IPClientOptions = append(
-		IPClientOptions,
+	controllers.IPClientOptions = append(
+		controllers.IPClientOptions,
 		withMockHTTPClient,
 	)
+
+	// disable help text for tests
+	cli.AppHelpTemplate = ""
 
 	tests := []testRunner{
 		{
@@ -70,18 +74,32 @@ func TestMain(t *testing.T) {
 				)
 				g.Expect(err).NotTo(HaveOccurred())
 
-				g.Expect(main).NotTo(Panic())
+				app := controllers.NewQrkDNSApp(
+					"version123",
+					[]*cli.Command{controllers.SyncCommand()},
+				)
+
+				err = app.Run(
+					[]string{
+						"qrkdns", "sync",
+						// withFlag(controllers.NetworkIDFlag), "xxx",
+						// withFlag(controllers.CloudflareAccountIDFlag), "foo",
+						// withFlag(controllers.CloudflareAPITokenFlag), "bar",
+					},
+				)
+
+				g.Expect(err).NotTo(HaveOccurred())
 			},
 		},
 		{
-			testCase: "panics for config error",
+			testCase: "returns error for missing required option",
 			runner: func(tt *testing.T) {
 				g := NewGomegaWithT(tt)
 
 				env := configrmocks.MockEnv{}
 				err := env.Load(
 					map[string]string{
-						// "NETWORK_ID":            "xxx", // missing required variable
+						"NETWORK_ID":            "", // missing required flag
 						"CLOUDFLARE_ACCOUNT_ID": "foo",
 						"CLOUDFLARE_API_TOKEN":  "bar",
 					},
@@ -89,11 +107,25 @@ func TestMain(t *testing.T) {
 				g.Expect(err).NotTo(HaveOccurred())
 				defer env.Restore()
 
-				g.Expect(main).To(Panic())
+				app := controllers.NewQrkDNSApp(
+					"version123",
+					[]*cli.Command{controllers.SyncCommand()},
+				)
+
+				err = app.Run(
+					[]string{
+						"qrkdns", "sync",
+						// withFlag(controllers.NetworkIDFlag), "xxx", // missing required flag
+						// withFlag(controllers.CloudflareAccountIDFlag), "foo",
+						// withFlag(controllers.CloudflareAPITokenFlag), "bar",
+					},
+				)
+
+				g.Expect(err).To(HaveOccurred())
 			},
 		},
 		{
-			testCase: "panics for new cloudflare client error",
+			testCase: "returns error for new cloudflare client error",
 			runner: func(tt *testing.T) {
 				g := NewGomegaWithT(tt)
 
@@ -114,7 +146,21 @@ func TestMain(t *testing.T) {
 				)
 				g.Expect(err).NotTo(HaveOccurred())
 
-				g.Expect(main).To(Panic())
+				app := controllers.NewQrkDNSApp(
+					"version123",
+					[]*cli.Command{controllers.SyncCommand()},
+				)
+
+				err = app.Run(
+					[]string{
+						"qrkdns", "sync",
+						// withFlag(controllers.NetworkIDFlag), "xxx",
+						// withFlag(controllers.CloudflareAccountIDFlag), "foo",
+						// withFlag(controllers.CloudflareAPITokenFlag), "bar",
+					},
+				)
+
+				g.Expect(err).To(HaveOccurred())
 			},
 		},
 		{
@@ -133,19 +179,33 @@ func TestMain(t *testing.T) {
 				g.Expect(err).NotTo(HaveOccurred())
 				defer env.Restore()
 
-				oldIPClientOptions := IPClientOptions
+				oldIPClientOptions := controllers.IPClientOptions
 				defer func() {
-					IPClientOptions = oldIPClientOptions
+					controllers.IPClientOptions = oldIPClientOptions
 				}()
 
-				IPClientOptions = append(
-					IPClientOptions,
+				controllers.IPClientOptions = append(
+					controllers.IPClientOptions,
 					func(client *ip.DefaultClient) error {
 						return fmt.Errorf("boo")
 					},
 				)
 
-				g.Expect(main).To(Panic())
+				app := controllers.NewQrkDNSApp(
+					"version123",
+					[]*cli.Command{controllers.SyncCommand()},
+				)
+
+				err = app.Run(
+					[]string{
+						"qrkdns", "sync",
+						// withFlag(controllers.NetworkIDFlag), "xxx",
+						// withFlag(controllers.CloudflareAccountIDFlag), "foo",
+						// withFlag(controllers.CloudflareAPITokenFlag), "bar",
+					},
+				)
+
+				g.Expect(err).To(MatchError("boo"))
 			},
 		},
 		{
@@ -170,7 +230,21 @@ func TestMain(t *testing.T) {
 				)
 				g.Expect(err).NotTo(HaveOccurred())
 
-				g.Expect(main).To(Panic())
+				app := controllers.NewQrkDNSApp(
+					"version123",
+					[]*cli.Command{controllers.SyncCommand()},
+				)
+
+				err = app.Run(
+					[]string{
+						"qrkdns", "sync",
+						// withFlag(controllers.NetworkIDFlag), "xxx",
+						// withFlag(controllers.CloudflareAccountIDFlag), "foo",
+						// withFlag(controllers.CloudflareAPITokenFlag), "bar",
+					},
+				)
+
+				g.Expect(err).To(MatchError("baz"))
 			},
 		},
 		{
@@ -195,7 +269,21 @@ func TestMain(t *testing.T) {
 				)
 				g.Expect(err).NotTo(HaveOccurred())
 
-				g.Expect(main).To(Panic())
+				app := controllers.NewQrkDNSApp(
+					"version123",
+					[]*cli.Command{controllers.SyncCommand()},
+				)
+
+				err = app.Run(
+					[]string{
+						"qrkdns", "sync",
+						// withFlag(controllers.NetworkIDFlag), "xxx",
+						// withFlag(controllers.CloudflareAccountIDFlag), "foo",
+						// withFlag(controllers.CloudflareAPITokenFlag), "bar",
+					},
+				)
+
+				g.Expect(err).To(MatchError("baz"))
 			},
 		},
 	}
