@@ -1,22 +1,10 @@
-package main
+package controllers
 
 import (
-	"os"
 	"time"
 
-	"github.com/markliederbach/qrkdns/pkg/controllers"
 	log "github.com/sirupsen/logrus"
-
 	"github.com/urfave/cli/v2"
-)
-
-var (
-	// Version tracks the semantic version of this release
-	Version = "latest"
-	// Commands contains the base commands to attach to this CLI
-	Commands = []*cli.Command{
-		controllers.SyncCommand(),
-	}
 )
 
 const (
@@ -24,8 +12,8 @@ const (
 	LogLevelFlag string = "log-level"
 )
 
-// NewApp creates a new CLI app
-func NewApp(version string, commands []*cli.Command) *cli.App {
+// NewQrkDNSApp creates a new CLI app
+func NewQrkDNSApp(version string, commands []*cli.Command) *cli.App {
 	return &cli.App{
 		Name:     "qrkdns",
 		Version:  version,
@@ -47,19 +35,9 @@ func NewApp(version string, commands []*cli.Command) *cli.App {
 				return err
 			}
 			log.SetLevel(logrusLevel)
-			log.WithField("version", Version).Debug("Running qrkdns")
+			log.WithField("version", version).Debug("Running qrkdns")
 			return nil
 		},
 		Commands: commands,
 	}
-}
-
-func main() {
-	app := NewApp(Version, Commands)
-	err := app.Run(os.Args)
-	if err != nil {
-		log.Error(err)
-		os.Exit(1)
-	}
-	os.Exit(0)
 }
