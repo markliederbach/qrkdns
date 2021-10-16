@@ -24,10 +24,6 @@ func withMockHTTPClient(client *ip.DefaultClient) error {
 	return nil
 }
 
-func withFlag(flagName string) string {
-	return fmt.Sprintf("--%v", flagName)
-}
-
 func TestSync(t *testing.T) {
 	controllers.CloudflareClientOptions = append(
 		controllers.CloudflareClientOptions,
@@ -79,15 +75,7 @@ func TestSync(t *testing.T) {
 					[]*cli.Command{controllers.SyncCommand()},
 				)
 
-				err = app.Run(
-					[]string{
-						"qrkdns", "sync",
-						// withFlag(controllers.NetworkIDFlag), "xxx",
-						// withFlag(controllers.CloudflareAccountIDFlag), "foo",
-						// withFlag(controllers.CloudflareAPITokenFlag), "bar",
-					},
-				)
-
+				err = app.Run([]string{"qrkdns", "sync"})
 				g.Expect(err).NotTo(HaveOccurred())
 			},
 		},
@@ -112,15 +100,7 @@ func TestSync(t *testing.T) {
 					[]*cli.Command{controllers.SyncCommand()},
 				)
 
-				err = app.Run(
-					[]string{
-						"qrkdns", "sync",
-						// withFlag(controllers.NetworkIDFlag), "xxx", // missing required flag
-						// withFlag(controllers.CloudflareAccountIDFlag), "foo",
-						// withFlag(controllers.CloudflareAPITokenFlag), "bar",
-					},
-				)
-
+				err = app.Run([]string{"qrkdns", "sync"})
 				g.Expect(err).To(HaveOccurred())
 			},
 		},
@@ -151,15 +131,7 @@ func TestSync(t *testing.T) {
 					[]*cli.Command{controllers.SyncCommand()},
 				)
 
-				err = app.Run(
-					[]string{
-						"qrkdns", "sync",
-						// withFlag(controllers.NetworkIDFlag), "xxx",
-						// withFlag(controllers.CloudflareAccountIDFlag), "foo",
-						// withFlag(controllers.CloudflareAPITokenFlag), "bar",
-					},
-				)
-
+				err = app.Run([]string{"qrkdns", "sync"})
 				g.Expect(err).To(HaveOccurred())
 			},
 		},
@@ -196,15 +168,7 @@ func TestSync(t *testing.T) {
 					[]*cli.Command{controllers.SyncCommand()},
 				)
 
-				err = app.Run(
-					[]string{
-						"qrkdns", "sync",
-						// withFlag(controllers.NetworkIDFlag), "xxx",
-						// withFlag(controllers.CloudflareAccountIDFlag), "foo",
-						// withFlag(controllers.CloudflareAPITokenFlag), "bar",
-					},
-				)
-
+				err = app.Run([]string{"qrkdns", "sync"})
 				g.Expect(err).To(MatchError("boo"))
 			},
 		},
@@ -235,15 +199,7 @@ func TestSync(t *testing.T) {
 					[]*cli.Command{controllers.SyncCommand()},
 				)
 
-				err = app.Run(
-					[]string{
-						"qrkdns", "sync",
-						// withFlag(controllers.NetworkIDFlag), "xxx",
-						// withFlag(controllers.CloudflareAccountIDFlag), "foo",
-						// withFlag(controllers.CloudflareAPITokenFlag), "bar",
-					},
-				)
-
+				err = app.Run([]string{"qrkdns", "sync"})
 				g.Expect(err).To(MatchError("baz"))
 			},
 		},
@@ -274,15 +230,7 @@ func TestSync(t *testing.T) {
 					[]*cli.Command{controllers.SyncCommand()},
 				)
 
-				err = app.Run(
-					[]string{
-						"qrkdns", "sync",
-						// withFlag(controllers.NetworkIDFlag), "xxx",
-						// withFlag(controllers.CloudflareAccountIDFlag), "foo",
-						// withFlag(controllers.CloudflareAPITokenFlag), "bar",
-					},
-				)
-
+				err = app.Run([]string{"qrkdns", "sync"})
 				g.Expect(err).To(MatchError("baz"))
 			},
 		},
