@@ -60,6 +60,7 @@ tasks:
         cat coverage.out
         | grep -v
         -e "mocks/"
+        -e "cmds/"
         > coverage.out.tmp
       - mv coverage.out.tmp coverage.out
       - task: coverage
