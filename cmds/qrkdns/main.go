@@ -1,57 +1,29 @@
 package main
 
 import (
-	"context"
+	"os"
 
-	"github.com/markliederbach/qrkdns/pkg/clients/cloudflare"
-	"github.com/markliederbach/qrkdns/pkg/clients/ip"
-	"github.com/markliederbach/qrkdns/pkg/config"
+	"github.com/markliederbach/qrkdns/pkg/controllers"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/urfave/cli/v2"
 )
 
 var (
 	// Version tracks the semantic version of this release
 	Version = "latest"
-	// CloudflareClientOptions is used by testing to inject a mock client option
-	CloudflareClientOptions = []cloudflare.LoadOption{}
-	// IPClientOptions is used by testing to inject a mock client option
-	IPClientOptions = []ip.LoadOption{}
+	// Commands contains the base commands to attach to this CLI
+	Commands = []*cli.Command{
+		controllers.SyncCommand(),
+	}
 )
 
 func main() {
-	ctx := context.TODO()
-	conf, err := config.Load()
+	app := controllers.NewQrkDNSApp(Version, Commands)
+	err := app.Run(os.Args)
 	if err != nil {
-		log.Panic(err)
+		log.Error(err)
+		os.Exit(1)
 	}
-
-	log.WithField("version", Version).Debug("Running qrkdns")
-
-	cloudflareClient, err := cloudflare.NewClientWithToken(
-		ctx,
-		conf.CloudFlareAccountID,
-		conf.DomainName,
-		conf.CloudFlareAPIToken,
-		CloudflareClientOptions...,
-	)
-	if err != nil {
-		log.Panic(err)
-	}
-
-	ipClient, err := ip.NewClient(conf.IPServiceURL, IPClientOptions...)
-	if err != nil {
-		log.Panic(err)
-	}
-
-	externalIP, err := ipClient.GetExternalIPAddress(ctx)
-	if err != nil {
-		log.Panic(err)
-	}
-
-	_, err = cloudflareClient.ApplyDNSARecord(ctx, conf.NetworkID, externalIP)
-	if err != nil {
-		log.Panic(err)
-	}
-
-	log.Infof("Sync complete")
+	os.Exit(0)
 }

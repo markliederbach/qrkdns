@@ -18,7 +18,7 @@ Instead of installing directly, you can use the Docker images:
 Example:
 
 ```console
-docker run --rm --env-file .env ghcr.io/markliederbach/qrkdns
+docker run --rm --env-file .env ghcr.io/markliederbach/qrkdns sync
 ```
 - The `.env` file should contain the following required environment variables
   - `NETWORK_ID` - The subdomain to update in Cloudflare (e.g., `myhost`)
