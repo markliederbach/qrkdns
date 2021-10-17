@@ -38,7 +38,7 @@ type ErrorReader struct {
 
 func init() {
 	sdkFunctions := []string{
-		"Get",
+		"Do",
 	}
 	for _, functionName := range sdkFunctions {
 		mocks.ObjectChannels[functionName] = make(chan interface{}, 100)
@@ -58,11 +58,11 @@ func (e *ErrorReader) Close() error {
 	return e.Error
 }
 
-// Get implements corresponding client function
-func (c *MockHTTPClient) Get(url string) (resp *http.Response, err error) {
-	functionName := "Get"
+// Do implements corresponding client function
+func (c *MockHTTPClient) Do(req *http.Request) (*http.Response, error) {
+	functionName := "Do"
 	obj := configrmocks.GetObject(functionName)
-	err = mocks.GetError(functionName)
+	err := mocks.GetError(functionName)
 	switch obj := obj.(type) {
 	case *http.Response:
 		return obj, err

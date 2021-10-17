@@ -1,6 +1,9 @@
 package controllers
 
 import (
+	"context"
+	"time"
+
 	"github.com/markliederbach/qrkdns/pkg/clients/cloudflare"
 	"github.com/markliederbach/qrkdns/pkg/clients/ip"
 	log "github.com/sirupsen/logrus"
@@ -29,6 +32,12 @@ const (
 
 	// IPServiceURLFlag wraps the name of the command flag
 	IPServiceURLFlag string = "ip-service-url"
+
+	// TimeoutFlag wraps the name of the command flag
+	TimeoutFlag string = "timeout"
+
+	// ScheduleFlag wraps the name of the command flag
+	ScheduleFlag string = "schedule"
 )
 
 // SyncCommand returns
@@ -73,20 +82,54 @@ func SyncCommand() *cli.Command {
 				EnvVars: []string{"IP_SERVICE_URL"},
 				Value:   "http://checkip.amazonaws.com",
 			},
+			&cli.StringFlag{
+				Name:    TimeoutFlag,
+				Usage:   "Timeout as a duration string (e.g., 5s). Empty/Unset means no timeout",
+				Value:   "",
+				EnvVars: []string{"TIMEOUT"},
+			},
 		},
 		Action: syncOnce,
+		Subcommands: []*cli.Command{
+			{
+				Name:  "cron",
+				Usage: "Run the sync on a recurring schedule",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:     ScheduleFlag,
+						Usage:    "Cron schedule",
+						EnvVars:  []string{"SCHEDULE"},
+						Required: true,
+					},
+				},
+				Action: syncCron,
+			},
+		},
 	}
 }
 
 func syncOnce(c *cli.Context) error {
+	var cancel context.CancelFunc
+
+	ctx := c.Context
 	accountID := c.String(CloudflareAccountIDFlag)
 	domain := c.String(DomainFlag)
 	apiToken := c.String(CloudflareAPITokenFlag)
 	ipServiceURL := c.String(IPServiceURLFlag)
 	networkID := c.String(NetworkIDFlag)
+	timeoutString := c.String(TimeoutFlag)
+
+	if timeoutString != "" {
+		timeoutDuration, err := time.ParseDuration(timeoutString)
+		if err != nil {
+			return err
+		}
+		ctx, cancel = context.WithTimeout(c.Context, timeoutDuration)
+		defer cancel()
+	}
 
 	cloudflareClient, err := cloudflare.NewClientWithToken(
-		c.Context,
+		ctx,
 		accountID,
 		domain,
 		apiToken,
@@ -101,16 +144,20 @@ func syncOnce(c *cli.Context) error {
 		return err
 	}
 
-	externalIP, err := ipClient.GetExternalIPAddress(c.Context)
+	externalIP, err := ipClient.GetExternalIPAddress(ctx)
 	if err != nil {
 		return err
 	}
 
-	_, err = cloudflareClient.ApplyDNSARecord(c.Context, networkID, externalIP)
+	_, err = cloudflareClient.ApplyDNSARecord(ctx, networkID, externalIP)
 	if err != nil {
 		return err
 	}
 
 	log.Infof("Sync complete")
 	return nil
+}
+
+func syncCron(c *cli.Context) error {
+	return syncOnce(c)
 }

@@ -49,6 +49,7 @@ func TestSync(t *testing.T) {
 						"NETWORK_ID":            "xxx",
 						"CLOUDFLARE_ACCOUNT_ID": "foo",
 						"CLOUDFLARE_API_TOKEN":  "bar",
+						"TIMEOUT":               "1s",
 					},
 				)
 				g.Expect(err).NotTo(HaveOccurred())
@@ -77,6 +78,32 @@ func TestSync(t *testing.T) {
 
 				err = app.Run([]string{"qrkdns", "sync"})
 				g.Expect(err).NotTo(HaveOccurred())
+			},
+		},
+		{
+			testCase: "returns error for bad timeout string",
+			runner: func(tt *testing.T) {
+				g := NewGomegaWithT(tt)
+
+				env := configrmocks.MockEnv{}
+				err := env.Load(
+					map[string]string{
+						"NETWORK_ID":            "xxx",
+						"CLOUDFLARE_ACCOUNT_ID": "foo",
+						"CLOUDFLARE_API_TOKEN":  "bar",
+						"TIMEOUT":               "badtimeout1234",
+					},
+				)
+				g.Expect(err).NotTo(HaveOccurred())
+				defer env.Restore()
+
+				app := controllers.NewQrkDNSApp(
+					"version123",
+					[]*cli.Command{controllers.SyncCommand()},
+				)
+
+				err = app.Run([]string{"qrkdns", "sync"})
+				g.Expect(err).To(MatchError("time: invalid duration \"badtimeout1234\""))
 			},
 		},
 		{
@@ -189,7 +216,7 @@ func TestSync(t *testing.T) {
 				defer env.Restore()
 
 				err = configrmocks.AddErrorReturns(
-					"Get",
+					"Do",
 					fmt.Errorf("baz"),
 				)
 				g.Expect(err).NotTo(HaveOccurred())
