@@ -12,6 +12,15 @@
             "program": "${workspaceFolder}/cmds/qrkdns/main.go",
             "envFile": "${workspaceFolder}/.env",
             "args": ["sync"]
+        },
+        {
+            "name": "qrkdns cron",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmds/qrkdns/main.go",
+            "envFile": "${workspaceFolder}/.env",
+            "args": ["sync", "cron"]
         }
     ]
 }

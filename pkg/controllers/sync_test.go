@@ -8,6 +8,7 @@ import (
 	configrmocks "github.com/markliederbach/configr/mocks"
 	"github.com/markliederbach/qrkdns/pkg/clients/cloudflare"
 	"github.com/markliederbach/qrkdns/pkg/clients/ip"
+	"github.com/markliederbach/qrkdns/pkg/clients/scheduler"
 	"github.com/markliederbach/qrkdns/pkg/controllers"
 	"github.com/markliederbach/qrkdns/pkg/mocks"
 	. "github.com/onsi/gomega"
@@ -21,6 +22,11 @@ func withMockSDKClient(client *cloudflare.DefaultClient) error {
 
 func withMockHTTPClient(client *ip.DefaultClient) error {
 	client.Client = &mocks.MockHTTPClient{}
+	return nil
+}
+
+func withMockSchedulerClient(client *scheduler.DefaultClient) error {
+	client.Client = &mocks.MockSchedulerClient{}
 	return nil
 }
 
@@ -49,6 +55,7 @@ func TestSync(t *testing.T) {
 						"NETWORK_ID":            "xxx",
 						"CLOUDFLARE_ACCOUNT_ID": "foo",
 						"CLOUDFLARE_API_TOKEN":  "bar",
+						"TIMEOUT":               "1s",
 					},
 				)
 				g.Expect(err).NotTo(HaveOccurred())
@@ -77,6 +84,32 @@ func TestSync(t *testing.T) {
 
 				err = app.Run([]string{"qrkdns", "sync"})
 				g.Expect(err).NotTo(HaveOccurred())
+			},
+		},
+		{
+			testCase: "returns error for bad timeout string",
+			runner: func(tt *testing.T) {
+				g := NewGomegaWithT(tt)
+
+				env := configrmocks.MockEnv{}
+				err := env.Load(
+					map[string]string{
+						"NETWORK_ID":            "xxx",
+						"CLOUDFLARE_ACCOUNT_ID": "foo",
+						"CLOUDFLARE_API_TOKEN":  "bar",
+						"TIMEOUT":               "badtimeout1234",
+					},
+				)
+				g.Expect(err).NotTo(HaveOccurred())
+				defer env.Restore()
+
+				app := controllers.NewQrkDNSApp(
+					"version123",
+					[]*cli.Command{controllers.SyncCommand()},
+				)
+
+				err = app.Run([]string{"qrkdns", "sync"})
+				g.Expect(err).To(MatchError("time: invalid duration \"badtimeout1234\""))
 			},
 		},
 		{
@@ -189,7 +222,7 @@ func TestSync(t *testing.T) {
 				defer env.Restore()
 
 				err = configrmocks.AddErrorReturns(
-					"Get",
+					"Do",
 					fmt.Errorf("baz"),
 				)
 				g.Expect(err).NotTo(HaveOccurred())
@@ -232,6 +265,115 @@ func TestSync(t *testing.T) {
 
 				err = app.Run([]string{"qrkdns", "sync"})
 				g.Expect(err).To(MatchError("baz"))
+			},
+		},
+	}
+	for _, test := range tests {
+		test := test
+		t.Run(test.testCase, test.runner)
+	}
+}
+
+func TestSyncCron(t *testing.T) {
+	controllers.CloudflareClientOptions = append(
+		controllers.CloudflareClientOptions,
+		withMockSDKClient,
+	)
+	controllers.IPClientOptions = append(
+		controllers.IPClientOptions,
+		withMockHTTPClient,
+	)
+	controllers.SchedulerClientOptions = append(
+		controllers.SchedulerClientOptions,
+		withMockSchedulerClient,
+	)
+
+	// disable help text for tests
+	cli.AppHelpTemplate = ""
+
+	tests := []testRunner{
+		{
+			testCase: "runs successfully",
+			runner: func(tt *testing.T) {
+				g := NewGomegaWithT(tt)
+
+				env := configrmocks.MockEnv{}
+				err := env.Load(
+					map[string]string{
+						"NETWORK_ID":            "xxx",
+						"CLOUDFLARE_ACCOUNT_ID": "foo",
+						"CLOUDFLARE_API_TOKEN":  "bar",
+						"TIMEOUT":               "1s",
+						"SCHEDULE":              "* * * * *",
+					},
+				)
+				g.Expect(err).NotTo(HaveOccurred())
+				defer env.Restore()
+
+				app := controllers.NewQrkDNSApp(
+					"version123",
+					[]*cli.Command{controllers.SyncCommand()},
+				)
+
+				err = app.Run([]string{"qrkdns", "sync", "cron"})
+				g.Expect(err).NotTo(HaveOccurred())
+			},
+		},
+		{
+			testCase: "returns error from new scheduler client",
+			runner: func(tt *testing.T) {
+				g := NewGomegaWithT(tt)
+
+				env := configrmocks.MockEnv{}
+				err := env.Load(
+					map[string]string{
+						"NETWORK_ID":            "xxx",
+						"CLOUDFLARE_ACCOUNT_ID": "foo",
+						"CLOUDFLARE_API_TOKEN":  "bar",
+						"TIMEOUT":               "1s",
+						"SCHEDULE":              "badcron1234",
+					},
+				)
+				g.Expect(err).NotTo(HaveOccurred())
+				defer env.Restore()
+
+				app := controllers.NewQrkDNSApp(
+					"version123",
+					[]*cli.Command{controllers.SyncCommand()},
+				)
+
+				err = app.Run([]string{"qrkdns", "sync", "cron"})
+				g.Expect(err.Error()).To(ContainSubstring("cron expression failed to be parsed"))
+			},
+		},
+		{
+			testCase: "returns error from new scheduler client",
+			runner: func(tt *testing.T) {
+				g := NewGomegaWithT(tt)
+
+				env := configrmocks.MockEnv{}
+				err := env.Load(
+					map[string]string{
+						"NETWORK_ID":            "xxx",
+						"CLOUDFLARE_ACCOUNT_ID": "foo",
+						"CLOUDFLARE_API_TOKEN":  "bar",
+						"TIMEOUT":               "1s",
+						"SCHEDULE":              "* * * * *",
+					},
+				)
+				g.Expect(err).NotTo(HaveOccurred())
+				defer env.Restore()
+
+				err = configrmocks.AddErrorReturns("Do", fmt.Errorf("foo"))
+				g.Expect(err).NotTo(HaveOccurred())
+
+				app := controllers.NewQrkDNSApp(
+					"version123",
+					[]*cli.Command{controllers.SyncCommand()},
+				)
+
+				err = app.Run([]string{"qrkdns", "sync", "cron"})
+				g.Expect(err).To(MatchError("foo"))
 			},
 		},
 	}

@@ -34,7 +34,11 @@ func NewClient(ipServiceURL string, opts ...LoadOption) (DefaultClient, error) {
 
 // GetExternalIPAddress returns the preferred outbound IP address used by this machine
 func (c *DefaultClient) GetExternalIPAddress(ctx context.Context) (string, error) {
-	response, err := c.Client.Get(c.IPServiceURL)
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, c.IPServiceURL, nil)
+	if err != nil {
+		return "", err
+	}
+	response, err := c.Client.Do(request)
 	if err != nil {
 		return "", err
 	}

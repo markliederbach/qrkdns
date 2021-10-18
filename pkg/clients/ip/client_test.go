@@ -44,6 +44,17 @@ func TestFile(t *testing.T) {
 			},
 		},
 		{
+			testCase: "returns error from new request builder",
+			runner: func(tt *testing.T) {
+				g := NewGomegaWithT(tt)
+				client, err := newMockIPClient()
+				g.Expect(err).NotTo(HaveOccurred())
+
+				_, err = client.GetExternalIPAddress(nil) //nolint
+				g.Expect(err).To(MatchError("net/http: nil Context"))
+			},
+		},
+		{
 			testCase: "returns error from external ip address lookup",
 			runner: func(tt *testing.T) {
 				g := NewGomegaWithT(tt)
@@ -51,7 +62,7 @@ func TestFile(t *testing.T) {
 				client, err := newMockIPClient()
 				g.Expect(err).NotTo(HaveOccurred())
 
-				err = configrmocks.AddErrorReturns("Get", fmt.Errorf("oh no"))
+				err = configrmocks.AddErrorReturns("Do", fmt.Errorf("oh no"))
 				g.Expect(err).NotTo(HaveOccurred())
 
 				_, err = client.GetExternalIPAddress(ctx)
@@ -67,7 +78,7 @@ func TestFile(t *testing.T) {
 				g.Expect(err).NotTo(HaveOccurred())
 
 				err = configrmocks.AddObjectReturns(
-					"Get",
+					"Do",
 					&http.Response{
 						StatusCode: 200,
 						Body:       &mocks.ErrorReader{Error: fmt.Errorf("error reader")},
@@ -88,7 +99,7 @@ func TestFile(t *testing.T) {
 				g.Expect(err).NotTo(HaveOccurred())
 
 				err = configrmocks.AddObjectReturns(
-					"Get",
+					"Do",
 					&http.Response{
 						StatusCode: 200,
 						Body:       &mocks.ErrorReader{Error: fmt.Errorf("error reader")},
@@ -109,7 +120,7 @@ func TestFile(t *testing.T) {
 				g.Expect(err).NotTo(HaveOccurred())
 
 				err = configrmocks.AddObjectReturns(
-					"Get",
+					"Do",
 					&http.Response{
 						StatusCode: 404,
 						Body:       io.NopCloser(strings.NewReader("foo")),

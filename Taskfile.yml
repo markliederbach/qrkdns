@@ -34,6 +34,8 @@ tasks:
 
         envsubst '$account,$token,$network' < .env.template > .env
 
+        sed 's/"//g' .env > .env.docker
+
         unset token
         unset account
     silent: true
@@ -43,13 +45,22 @@ tasks:
       - sh: which envsubst
         msg: Must have `envsubst` installed to run this task
 
-  run:
-    desc: Run qrkdns
+  run:once:
+    desc: Run qrkdns once
     vars:
       DOTENV:
         sh: cat .env | grep -v "#" | xargs
     cmds:
       - "{{.DOTENV}} go run cmds/qrkdns/main.go sync"
+    silent: true
+
+  run:cron:
+    desc: Run qrkdns on a cron
+    vars:
+      DOTENV:
+        sh: cat .env | grep -v "#" | xargs
+    cmds:
+      - "{{.DOTENV}} go run cmds/qrkdns/main.go sync cron"
     silent: true
 
   test:
@@ -120,18 +131,18 @@ tasks:
       - docker build --pull --rm -f ./Dockerfile -t qrkdns:latest "."
 
   docker:run:local:
-    desc: Run the application locally with provided .env variables
+    desc: Run the application locally with provided .env.docker variables
     deps:
       - docker:build:local
     cmds:
-      - docker run --env-file .env --rm -it  qrkdns:latest sync
+      - docker run --env-file .env.docker --rm -it  qrkdns:latest sync
 
   docker:run:remote:
-    desc: Run the application from the latest build with provided .env variables
+    desc: Run the application from the latest build with provided .env.docker variables
     deps:
       - docker:login
     cmds:
-      - docker run --pull always --rm --env-file .env ghcr.io/markliederbach/qrkdns:latest sync
+      - docker run --pull always --rm --env-file .env.docker ghcr.io/markliederbach/qrkdns:latest sync
 
   goreleaser:check:
     desc: Validate the Goreleaser configuration
@@ -149,7 +160,7 @@ tasks:
       - sh: ${GOPATH}/bin/goreleaser --version
         msg: Run `task deps` to install Go tools
 
-  goreleaser:run:
+  goreleaser:run:once:
     desc: Run the local binary produced from goreleaser
     vars:
       DOTENV:
