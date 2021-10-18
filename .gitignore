@@ -1,4 +1,5 @@
 .env
+.env.docker
 __debug_bin
 coverage.out*
 

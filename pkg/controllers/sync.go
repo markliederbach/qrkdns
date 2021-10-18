@@ -178,7 +178,7 @@ func syncCron(c *cli.Context) error {
 		return err
 	}
 
-	cronLog.Info("Running cron sceduler")
+	cronLog.Info("Running cron scheduler")
 	clientScheduler.StartBlocking() // does not return
 
 	return nil
