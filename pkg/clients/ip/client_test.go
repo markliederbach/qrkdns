@@ -50,7 +50,7 @@ func TestFile(t *testing.T) {
 				client, err := newMockIPClient()
 				g.Expect(err).NotTo(HaveOccurred())
 
-				_, err = client.GetExternalIPAddress(nil) // passing nil context
+				_, err = client.GetExternalIPAddress(nil) //nolint
 				g.Expect(err).To(MatchError("net/http: nil Context"))
 			},
 		},
