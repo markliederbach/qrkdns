@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/go-co-op/gocron"
 	"github.com/markliederbach/qrkdns/pkg/clients/cloudflare"
 	"github.com/markliederbach/qrkdns/pkg/clients/ip"
+	"github.com/markliederbach/qrkdns/pkg/clients/scheduler"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 )
@@ -16,6 +16,8 @@ var (
 	CloudflareClientOptions = []cloudflare.LoadOption{}
 	// IPClientOptions is used by testing to inject a mock client option
 	IPClientOptions = []ip.LoadOption{}
+	// SchedulerClientOptions is used by testing to inject a mock client option
+	SchedulerClientOptions = []scheduler.LoadOption{}
 )
 
 const (
@@ -164,18 +166,20 @@ func syncCron(c *cli.Context) error {
 
 	cronLog := log.WithField("schedule", scheduleCron)
 
-	scheduler := gocron.NewScheduler(time.Local)
-	scheduler.Cron(scheduleCron)
-
-	coreJob := scheduler.Jobs()[0]
-	if coreJob.Error() != nil {
-		return coreJob.Error()
+	client, err := scheduler.NewClient(scheduleCron, SchedulerClientOptions...)
+	if err != nil {
+		return err
 	}
 
-	scheduler.Do(syncOnce, c)
+	clientScheduler := client.GetScheduler()
+
+	_, err = clientScheduler.Do(syncOnce, c)
+	if err != nil {
+		return err
+	}
 
 	cronLog.Info("Running cron sceduler")
-	scheduler.StartBlocking() // does not return
+	clientScheduler.StartBlocking() // does not return
 
 	return nil
 }
