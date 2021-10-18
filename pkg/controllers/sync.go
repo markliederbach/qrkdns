@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/go-co-op/gocron"
 	"github.com/markliederbach/qrkdns/pkg/clients/cloudflare"
 	"github.com/markliederbach/qrkdns/pkg/clients/ip"
 	log "github.com/sirupsen/logrus"
@@ -97,7 +98,7 @@ func SyncCommand() *cli.Command {
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:     ScheduleFlag,
-						Usage:    "Cron schedule",
+						Usage:    "Cron pattern",
 						EnvVars:  []string{"SCHEDULE"},
 						Required: true,
 					},
@@ -159,5 +160,22 @@ func syncOnce(c *cli.Context) error {
 }
 
 func syncCron(c *cli.Context) error {
-	return syncOnce(c)
+	scheduleCron := c.String(ScheduleFlag)
+
+	cronLog := log.WithField("schedule", scheduleCron)
+
+	scheduler := gocron.NewScheduler(time.Local)
+	scheduler.Cron(scheduleCron)
+
+	coreJob := scheduler.Jobs()[0]
+	if coreJob.Error() != nil {
+		return coreJob.Error()
+	}
+
+	scheduler.Do(syncOnce, c)
+
+	cronLog.Info("Running cron sceduler")
+	scheduler.StartBlocking() // does not return
+
+	return nil
 }

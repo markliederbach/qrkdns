@@ -280,6 +280,9 @@ github.com/fatih/structtag
 github.com/fsnotify/fsnotify
 # github.com/fzipp/gocyclo v0.3.1
 github.com/fzipp/gocyclo
+# github.com/go-co-op/gocron v1.9.0
+## explicit
+github.com/go-co-op/gocron
 # github.com/go-critic/go-critic v0.5.6
 github.com/go-critic/go-critic/checkers
 github.com/go-critic/go-critic/checkers/internal/astwalk
@@ -613,9 +616,7 @@ github.com/magiconair/properties
 github.com/maratori/testpackage/pkg/testpackage
 # github.com/markliederbach/configr v0.1.1
 ## explicit
-github.com/markliederbach/configr
 github.com/markliederbach/configr/mocks
-github.com/markliederbach/configr/providers
 # github.com/matoous/godox v0.0.0-20210227103229-6504466cf951
 github.com/matoous/godox
 # github.com/mattn/go-colorable v0.1.8
@@ -667,8 +668,6 @@ github.com/nishanths/exhaustive
 github.com/nishanths/predeclared/passes/predeclared
 # github.com/olekukonko/tablewriter v0.0.5
 github.com/olekukonko/tablewriter
-# github.com/onsi/ginkgo v1.16.4
-## explicit
 # github.com/onsi/gomega v1.16.0
 ## explicit
 github.com/onsi/gomega
@@ -717,6 +716,8 @@ github.com/quasilyte/go-ruleguard/ruleguard/quasigo
 github.com/quasilyte/go-ruleguard/ruleguard/typematch
 # github.com/quasilyte/regex/syntax v0.0.0-20200407221936-30656e2c4a95
 github.com/quasilyte/regex/syntax
+# github.com/robfig/cron/v3 v3.0.1
+github.com/robfig/cron/v3
 # github.com/russross/blackfriday/v2 v2.0.1
 github.com/russross/blackfriday/v2
 # github.com/ryancurrah/gomodguard v1.2.3
@@ -905,6 +906,8 @@ golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
 # golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 golang.org/x/sync/errgroup
+golang.org/x/sync/semaphore
+golang.org/x/sync/singleflight
 # golang.org/x/sys v0.0.0-20210831042530-f4d43177bf5e
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs

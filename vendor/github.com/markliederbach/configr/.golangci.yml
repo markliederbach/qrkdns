@@ -1,6 +1,0 @@
-run:
-  modules-download-mode: vendor
-  timeout: 5m
-# issues:
-#   exclude:
-#      - composite literal uses unkeyed fields
