@@ -4,7 +4,7 @@ This agent automatically discovers the current host's external IP address, and u
 - [Getting Started](#getting-started)
   - [Installation](#installation)
     - [Docker](#docker)
-      - [Examples:](#examples)
+      - [Examples](#examples)
 
 # Getting Started
 ## Installation
@@ -19,7 +19,7 @@ Instead of installing directly, you can use the Docker images:
 **A note about `.env` files and docker.** The `--env-file` option only takes env files that do not have quotations. If quotes are present, they won't parse the options correctly. It is recommended that you create a separate file called `.env.docker`, which doesn't use any quotations.
 
 
-#### Examples:
+#### Examples
 
 **Sync Once**
 ```console
