@@ -18,6 +18,7 @@ Instead of installing directly, you can use the Docker images:
 | Name | Description |
 | ---- | ----------- |
 | [ghcr.io/markliederbach/qrkdns](https://github.com/markliederbach/qrkdns/pkgs/container/qrkdns) | Basic image |
+| [markliederbach/qrkdns](https://hub.docker.com/repository/docker/markliederbach/qrkdns)| Dockerhub mirror |
 
 **A note about `.env` files and docker.** The `--env-file` option only takes env files that do not have quotations. If quotes are present, they won't parse the options correctly. It is recommended that you create a separate file called `.env.docker`, which doesn't use any quotations.
 
