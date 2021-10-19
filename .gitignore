@@ -2,5 +2,5 @@
 .env.docker
 __debug_bin
 coverage.out*
-
+template.xml
 dist/
