@@ -614,9 +614,9 @@ github.com/ldez/tagliatelle
 github.com/magiconair/properties
 # github.com/maratori/testpackage v1.0.1
 github.com/maratori/testpackage/pkg/testpackage
-# github.com/markliederbach/configr v0.1.1
+# github.com/markliederbach/go-envy v0.1.0
 ## explicit
-github.com/markliederbach/configr/mocks
+github.com/markliederbach/go-envy
 # github.com/matoous/godox v0.0.0-20210227103229-6504466cf951
 github.com/matoous/godox
 # github.com/mattn/go-colorable v0.1.8
@@ -644,7 +644,7 @@ github.com/mitchellh/copystructure
 github.com/mitchellh/go-homedir
 # github.com/mitchellh/mapstructure v1.4.1
 github.com/mitchellh/mapstructure
-# github.com/mitchellh/reflectwalk v1.0.2
+# github.com/mitchellh/reflectwalk v1.0.1
 github.com/mitchellh/reflectwalk
 # github.com/moricho/tparallel v0.2.1
 github.com/moricho/tparallel
@@ -758,7 +758,7 @@ github.com/sourcegraph/go-diff/diff
 # github.com/spf13/afero v1.6.0
 github.com/spf13/afero
 github.com/spf13/afero/mem
-# github.com/spf13/cast v1.4.1
+# github.com/spf13/cast v1.3.1
 github.com/spf13/cast
 # github.com/spf13/cobra v1.2.1
 github.com/spf13/cobra

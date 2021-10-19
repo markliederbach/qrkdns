@@ -1,4 +1,4 @@
-package mocks
+package envy
 
 import (
 	"errors"
@@ -31,10 +31,7 @@ func (m *MockEnv) Load(variables map[string]string) error {
 				return err
 			}
 		} else {
-			err := os.Unsetenv(key)
-			if err != nil {
-				return err
-			}
+			_ = os.Unsetenv(key)
 		}
 	}
 	m.isLoaded = true
@@ -55,10 +52,7 @@ func (m *MockEnv) Restore() {
 				panic(err)
 			}
 		} else {
-			err := os.Unsetenv(key)
-			if err != nil {
-				panic(err)
-			}
+			_ = os.Unsetenv(key)
 		}
 	}
 	m.existing = make(map[string]string)

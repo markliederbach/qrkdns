@@ -7,7 +7,7 @@ require (
 	github.com/go-co-op/gocron v1.9.0
 	github.com/golangci/golangci-lint v1.42.1
 	github.com/goreleaser/goreleaser v0.182.1
-	github.com/markliederbach/configr v0.1.1
+	github.com/markliederbach/go-envy v0.1.0
 	github.com/onsi/gomega v1.16.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/urfave/cli/v2 v2.3.0

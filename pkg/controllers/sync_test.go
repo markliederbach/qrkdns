@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	sdk "github.com/cloudflare/cloudflare-go"
-	configrmocks "github.com/markliederbach/configr/mocks"
+	"github.com/markliederbach/go-envy"
 	"github.com/markliederbach/qrkdns/pkg/clients/cloudflare"
 	"github.com/markliederbach/qrkdns/pkg/clients/ip"
 	"github.com/markliederbach/qrkdns/pkg/clients/scheduler"
@@ -49,7 +49,7 @@ func TestSync(t *testing.T) {
 			runner: func(tt *testing.T) {
 				g := NewGomegaWithT(tt)
 
-				env := configrmocks.MockEnv{}
+				env := envy.MockEnv{}
 				err := env.Load(
 					map[string]string{
 						"NETWORK_ID":            "xxx",
@@ -61,7 +61,7 @@ func TestSync(t *testing.T) {
 				g.Expect(err).NotTo(HaveOccurred())
 				defer env.Restore()
 
-				err = configrmocks.AddObjectReturns(
+				err = envy.AddObjectReturns(
 					"DNSRecords",
 					[]sdk.DNSRecord{},
 				)
@@ -69,7 +69,7 @@ func TestSync(t *testing.T) {
 
 				expectedRecord := cloudflare.BuildDNSARecord("foo", "foo.net", mocks.DefaultExternalIPAddress)
 
-				err = configrmocks.AddObjectReturns(
+				err = envy.AddObjectReturns(
 					"CreateDNSRecord",
 					&sdk.DNSRecordResponse{
 						Result: expectedRecord.ToCloudFlareDNSRecord(),
@@ -91,7 +91,7 @@ func TestSync(t *testing.T) {
 			runner: func(tt *testing.T) {
 				g := NewGomegaWithT(tt)
 
-				env := configrmocks.MockEnv{}
+				env := envy.MockEnv{}
 				err := env.Load(
 					map[string]string{
 						"NETWORK_ID":            "xxx",
@@ -117,7 +117,7 @@ func TestSync(t *testing.T) {
 			runner: func(tt *testing.T) {
 				g := NewGomegaWithT(tt)
 
-				env := configrmocks.MockEnv{}
+				env := envy.MockEnv{}
 				err := env.Load(
 					map[string]string{
 						"NETWORK_ID":            "", // missing required flag
@@ -142,7 +142,7 @@ func TestSync(t *testing.T) {
 			runner: func(tt *testing.T) {
 				g := NewGomegaWithT(tt)
 
-				env := configrmocks.MockEnv{}
+				env := envy.MockEnv{}
 				err := env.Load(
 					map[string]string{
 						"NETWORK_ID":            "xxx",
@@ -153,7 +153,7 @@ func TestSync(t *testing.T) {
 				g.Expect(err).NotTo(HaveOccurred())
 				defer env.Restore()
 
-				err = configrmocks.AddErrorReturns(
+				err = envy.AddErrorReturns(
 					"ZoneIDByName",
 					fmt.Errorf("baz"),
 				)
@@ -173,7 +173,7 @@ func TestSync(t *testing.T) {
 			runner: func(tt *testing.T) {
 				g := NewGomegaWithT(tt)
 
-				env := configrmocks.MockEnv{}
+				env := envy.MockEnv{}
 				err := env.Load(
 					map[string]string{
 						"NETWORK_ID":            "xxx",
@@ -210,7 +210,7 @@ func TestSync(t *testing.T) {
 			runner: func(tt *testing.T) {
 				g := NewGomegaWithT(tt)
 
-				env := configrmocks.MockEnv{}
+				env := envy.MockEnv{}
 				err := env.Load(
 					map[string]string{
 						"NETWORK_ID":            "xxx",
@@ -221,7 +221,7 @@ func TestSync(t *testing.T) {
 				g.Expect(err).NotTo(HaveOccurred())
 				defer env.Restore()
 
-				err = configrmocks.AddErrorReturns(
+				err = envy.AddErrorReturns(
 					"Do",
 					fmt.Errorf("baz"),
 				)
@@ -241,7 +241,7 @@ func TestSync(t *testing.T) {
 			runner: func(tt *testing.T) {
 				g := NewGomegaWithT(tt)
 
-				env := configrmocks.MockEnv{}
+				env := envy.MockEnv{}
 				err := env.Load(
 					map[string]string{
 						"NETWORK_ID":            "xxx",
@@ -252,7 +252,7 @@ func TestSync(t *testing.T) {
 				g.Expect(err).NotTo(HaveOccurred())
 				defer env.Restore()
 
-				err = configrmocks.AddErrorReturns(
+				err = envy.AddErrorReturns(
 					"DNSRecords",
 					fmt.Errorf("baz"),
 				)
@@ -297,7 +297,7 @@ func TestSyncCron(t *testing.T) {
 			runner: func(tt *testing.T) {
 				g := NewGomegaWithT(tt)
 
-				env := configrmocks.MockEnv{}
+				env := envy.MockEnv{}
 				err := env.Load(
 					map[string]string{
 						"NETWORK_ID":            "xxx",
@@ -324,7 +324,7 @@ func TestSyncCron(t *testing.T) {
 			runner: func(tt *testing.T) {
 				g := NewGomegaWithT(tt)
 
-				env := configrmocks.MockEnv{}
+				env := envy.MockEnv{}
 				err := env.Load(
 					map[string]string{
 						"NETWORK_ID":            "xxx",
@@ -351,7 +351,7 @@ func TestSyncCron(t *testing.T) {
 			runner: func(tt *testing.T) {
 				g := NewGomegaWithT(tt)
 
-				env := configrmocks.MockEnv{}
+				env := envy.MockEnv{}
 				err := env.Load(
 					map[string]string{
 						"NETWORK_ID":            "xxx",
@@ -364,7 +364,7 @@ func TestSyncCron(t *testing.T) {
 				g.Expect(err).NotTo(HaveOccurred())
 				defer env.Restore()
 
-				err = configrmocks.AddErrorReturns("Do", fmt.Errorf("foo"))
+				err = envy.AddErrorReturns("Do", fmt.Errorf("foo"))
 				g.Expect(err).NotTo(HaveOccurred())
 
 				app := controllers.NewQrkDNSApp(

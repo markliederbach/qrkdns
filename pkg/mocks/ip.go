@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	configrmocks "github.com/markliederbach/configr/mocks"
+	"github.com/markliederbach/go-envy"
 	"github.com/markliederbach/qrkdns/pkg/clients/ip"
 )
 
@@ -40,10 +40,10 @@ func init() {
 		"Do",
 	}
 	for _, functionName := range sdkFunctions {
-		configrmocks.ObjectChannels[functionName] = make(chan interface{}, 100)
-		configrmocks.ErrorChannels[functionName] = make(chan error, 100)
-		configrmocks.DefaultObjects[functionName] = struct{}{}
-		configrmocks.DefaultErrors[functionName] = nil
+		envy.ObjectChannels[functionName] = make(chan interface{}, 100)
+		envy.ErrorChannels[functionName] = make(chan error, 100)
+		envy.DefaultObjects[functionName] = struct{}{}
+		envy.DefaultErrors[functionName] = nil
 	}
 }
 
@@ -60,8 +60,8 @@ func (e *ErrorReader) Close() error {
 // Do implements corresponding client function
 func (c *MockHTTPClient) Do(req *http.Request) (*http.Response, error) {
 	functionName := "Do"
-	obj := configrmocks.GetObject(functionName)
-	err := configrmocks.GetError(functionName)
+	obj := envy.GetObject(functionName)
+	err := envy.GetError(functionName)
 	switch obj := obj.(type) {
 	case *http.Response:
 		return obj, err

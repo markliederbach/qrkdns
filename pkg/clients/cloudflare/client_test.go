@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	sdk "github.com/cloudflare/cloudflare-go"
-	configrmocks "github.com/markliederbach/configr/mocks"
+	"github.com/markliederbach/go-envy"
 	"github.com/markliederbach/qrkdns/pkg/clients/cloudflare"
 	"github.com/markliederbach/qrkdns/pkg/mocks"
 	. "github.com/onsi/gomega"
@@ -52,7 +52,7 @@ func TestFile(t *testing.T) {
 
 				ctx := context.Background()
 
-				err := configrmocks.AddObjectReturns("ZoneIDByName", "newzone")
+				err := envy.AddObjectReturns("ZoneIDByName", "newzone")
 				g.Expect(err).NotTo(HaveOccurred())
 
 				client, err := cloudflare.NewClientWithToken(
@@ -112,7 +112,7 @@ func TestFile(t *testing.T) {
 
 				ctx := context.Background()
 
-				err := configrmocks.AddErrorReturns("ZoneIDByName", fmt.Errorf("no no no"))
+				err := envy.AddErrorReturns("ZoneIDByName", fmt.Errorf("no no no"))
 				g.Expect(err).NotTo(HaveOccurred())
 
 				_, err = cloudflare.NewClientWithToken(
@@ -141,7 +141,7 @@ func TestFile(t *testing.T) {
 				)
 				g.Expect(err).NotTo(HaveOccurred())
 
-				err = configrmocks.AddErrorReturns("DNSRecords", fmt.Errorf("nope"))
+				err = envy.AddErrorReturns("DNSRecords", fmt.Errorf("nope"))
 				g.Expect(err).NotTo(HaveOccurred())
 
 				_, err = client.ListDNSARecords(ctx, "bar")
@@ -155,7 +155,7 @@ func TestFile(t *testing.T) {
 
 				ctx := context.Background()
 
-				err := configrmocks.AddObjectReturns(
+				err := envy.AddObjectReturns(
 					"DNSRecords",
 					[]sdk.DNSRecord{},
 				)
@@ -172,7 +172,7 @@ func TestFile(t *testing.T) {
 
 				expectedRecord := cloudflare.BuildDNSARecord("foo", "foo.net", "9.9.9.9")
 
-				err = configrmocks.AddObjectReturns(
+				err = envy.AddObjectReturns(
 					"CreateDNSRecord",
 					&sdk.DNSRecordResponse{
 						Result: expectedRecord.ToCloudFlareDNSRecord(),
@@ -206,7 +206,7 @@ func TestFile(t *testing.T) {
 				updateRecord.ID = "foo"
 				deleteRecord := cloudflare.BuildDNSARecord("bar", "foo.net", "4.3.2.1")
 
-				err = configrmocks.AddObjectReturns(
+				err = envy.AddObjectReturns(
 					"DNSRecords",
 					[]sdk.DNSRecord{
 						updateRecord.ToCloudFlareDNSRecord(),
@@ -215,7 +215,7 @@ func TestFile(t *testing.T) {
 				)
 				g.Expect(err).NotTo(HaveOccurred())
 
-				err = configrmocks.AddObjectReturns(
+				err = envy.AddObjectReturns(
 					"DNSRecord",
 					updateRecord.ToCloudFlareDNSRecord(),
 				)
@@ -248,7 +248,7 @@ func TestFile(t *testing.T) {
 				equalRecord := cloudflare.BuildDNSARecord("bar", "foo.net", "1.2.3.4")
 				deleteRecord := cloudflare.BuildDNSARecord("bar", "foo.net", "5.5.5.5")
 
-				err = configrmocks.AddObjectReturns(
+				err = envy.AddObjectReturns(
 					"DNSRecords",
 					[]sdk.DNSRecord{
 						equalRecord.ToCloudFlareDNSRecord(),
@@ -281,7 +281,7 @@ func TestFile(t *testing.T) {
 				updateRecord := cloudflare.BuildDNSARecord("bar", "foo.net", "1.2.3.4")
 				updateRecord.TTL = 4 // set to something else
 
-				err = configrmocks.AddObjectReturns(
+				err = envy.AddObjectReturns(
 					"DNSRecords",
 					[]sdk.DNSRecord{
 						updateRecord.ToCloudFlareDNSRecord(),
@@ -289,7 +289,7 @@ func TestFile(t *testing.T) {
 				)
 				g.Expect(err).NotTo(HaveOccurred())
 
-				err = configrmocks.AddErrorReturns(
+				err = envy.AddErrorReturns(
 					"UpdateDNSRecord",
 					fmt.Errorf("baz"),
 				)
@@ -318,7 +318,7 @@ func TestFile(t *testing.T) {
 				updateRecord := cloudflare.BuildDNSARecord("bar", "foo.net", "1.2.3.4")
 				updateRecord.TTL = 4 // set to something else
 
-				err = configrmocks.AddObjectReturns(
+				err = envy.AddObjectReturns(
 					"DNSRecords",
 					[]sdk.DNSRecord{
 						updateRecord.ToCloudFlareDNSRecord(),
@@ -326,7 +326,7 @@ func TestFile(t *testing.T) {
 				)
 				g.Expect(err).NotTo(HaveOccurred())
 
-				err = configrmocks.AddErrorReturns(
+				err = envy.AddErrorReturns(
 					"DNSRecord",
 					fmt.Errorf("baz"),
 				)
@@ -355,7 +355,7 @@ func TestFile(t *testing.T) {
 				existingRecord := cloudflare.BuildDNSARecord("bar", "foo.net", "5.5.5.5")
 				deleteRecord := cloudflare.BuildDNSARecord("bar", "foo.net", "5.5.5.6")
 
-				err = configrmocks.AddObjectReturns(
+				err = envy.AddObjectReturns(
 					"DNSRecords",
 					[]sdk.DNSRecord{
 						existingRecord.ToCloudFlareDNSRecord(),
@@ -364,7 +364,7 @@ func TestFile(t *testing.T) {
 				)
 				g.Expect(err).NotTo(HaveOccurred())
 
-				err = configrmocks.AddErrorReturns(
+				err = envy.AddErrorReturns(
 					"DeleteDNSRecord",
 					fmt.Errorf("baz"),
 				)
@@ -381,13 +381,13 @@ func TestFile(t *testing.T) {
 
 				ctx := context.Background()
 
-				err := configrmocks.AddObjectReturns(
+				err := envy.AddObjectReturns(
 					"DNSRecords",
 					[]sdk.DNSRecord{},
 				)
 				g.Expect(err).NotTo(HaveOccurred())
 
-				err = configrmocks.AddErrorReturns(
+				err = envy.AddErrorReturns(
 					"CreateDNSRecord",
 					fmt.Errorf("baz"),
 				)
@@ -413,7 +413,7 @@ func TestFile(t *testing.T) {
 
 				ctx := context.Background()
 
-				err := configrmocks.AddErrorReturns(
+				err := envy.AddErrorReturns(
 					"DNSRecords",
 					fmt.Errorf("boo"),
 				)

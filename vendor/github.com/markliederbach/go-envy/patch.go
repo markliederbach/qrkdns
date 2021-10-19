@@ -1,4 +1,4 @@
-package mocks
+package envy
 
 import "errors"
 

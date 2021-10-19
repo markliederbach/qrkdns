@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	configrmocks "github.com/markliederbach/configr/mocks"
+	"github.com/markliederbach/go-envy"
 	"github.com/markliederbach/qrkdns/pkg/clients/ip"
 	"github.com/markliederbach/qrkdns/pkg/mocks"
 	. "github.com/onsi/gomega"
@@ -62,7 +62,7 @@ func TestFile(t *testing.T) {
 				client, err := newMockIPClient()
 				g.Expect(err).NotTo(HaveOccurred())
 
-				err = configrmocks.AddErrorReturns("Do", fmt.Errorf("oh no"))
+				err = envy.AddErrorReturns("Do", fmt.Errorf("oh no"))
 				g.Expect(err).NotTo(HaveOccurred())
 
 				_, err = client.GetExternalIPAddress(ctx)
@@ -77,7 +77,7 @@ func TestFile(t *testing.T) {
 				client, err := newMockIPClient()
 				g.Expect(err).NotTo(HaveOccurred())
 
-				err = configrmocks.AddObjectReturns(
+				err = envy.AddObjectReturns(
 					"Do",
 					&http.Response{
 						StatusCode: 200,
@@ -98,7 +98,7 @@ func TestFile(t *testing.T) {
 				client, err := newMockIPClient()
 				g.Expect(err).NotTo(HaveOccurred())
 
-				err = configrmocks.AddObjectReturns(
+				err = envy.AddObjectReturns(
 					"Do",
 					&http.Response{
 						StatusCode: 200,
@@ -119,7 +119,7 @@ func TestFile(t *testing.T) {
 				client, err := newMockIPClient()
 				g.Expect(err).NotTo(HaveOccurred())
 
-				err = configrmocks.AddObjectReturns(
+				err = envy.AddObjectReturns(
 					"Do",
 					&http.Response{
 						StatusCode: 404,

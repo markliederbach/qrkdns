@@ -2,7 +2,7 @@ package mocks
 
 import (
 	"github.com/go-co-op/gocron"
-	configrmocks "github.com/markliederbach/configr/mocks"
+	"github.com/markliederbach/go-envy"
 )
 
 var (
@@ -19,18 +19,18 @@ func init() {
 		"StartBlocking",
 	}
 	for _, functionName := range sdkFunctions {
-		configrmocks.ObjectChannels[functionName] = make(chan interface{}, 100)
-		configrmocks.ErrorChannels[functionName] = make(chan error, 100)
-		configrmocks.DefaultObjects[functionName] = struct{}{}
-		configrmocks.DefaultErrors[functionName] = nil
+		envy.ObjectChannels[functionName] = make(chan interface{}, 100)
+		envy.ErrorChannels[functionName] = make(chan error, 100)
+		envy.DefaultObjects[functionName] = struct{}{}
+		envy.DefaultErrors[functionName] = nil
 	}
 }
 
 // Do implements corresponding client function
 func (c *MockSchedulerClient) Do(jobFun interface{}, params ...interface{}) (*gocron.Job, error) {
 	functionName := "Do"
-	obj := configrmocks.GetObject(functionName)
-	err := configrmocks.GetError(functionName)
+	obj := envy.GetObject(functionName)
+	err := envy.GetError(functionName)
 	switch obj := obj.(type) {
 	case *gocron.Job:
 		return obj, err

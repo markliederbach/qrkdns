@@ -4,8 +4,7 @@ import (
 	"context"
 
 	sdk "github.com/cloudflare/cloudflare-go"
-	"github.com/markliederbach/configr/mocks"
-	configrmocks "github.com/markliederbach/configr/mocks"
+	"github.com/markliederbach/go-envy"
 	"github.com/markliederbach/qrkdns/pkg/clients/cloudflare"
 )
 
@@ -45,18 +44,18 @@ func init() {
 		"DeleteDNSRecord",
 	}
 	for _, functionName := range sdkFunctions {
-		mocks.ObjectChannels[functionName] = make(chan interface{}, 100)
-		mocks.ErrorChannels[functionName] = make(chan error, 100)
-		mocks.DefaultObjects[functionName] = struct{}{}
-		mocks.DefaultErrors[functionName] = nil
+		envy.ObjectChannels[functionName] = make(chan interface{}, 100)
+		envy.ErrorChannels[functionName] = make(chan error, 100)
+		envy.DefaultObjects[functionName] = struct{}{}
+		envy.DefaultErrors[functionName] = nil
 	}
 }
 
 // ZoneIDByName implements corresponding client function
 func (c *MockCloudflareSDKClient) ZoneIDByName(zoneName string) (string, error) {
 	functionName := "ZoneIDByName"
-	obj := configrmocks.GetObject(functionName)
-	err := mocks.GetError(functionName)
+	obj := envy.GetObject(functionName)
+	err := envy.GetError(functionName)
 	switch obj := obj.(type) {
 	case string:
 		return obj, err
@@ -68,8 +67,8 @@ func (c *MockCloudflareSDKClient) ZoneIDByName(zoneName string) (string, error) 
 // DNSRecords implements corresponding client function
 func (c *MockCloudflareSDKClient) DNSRecords(ctx context.Context, zoneID string, rr sdk.DNSRecord) ([]sdk.DNSRecord, error) {
 	functionName := "DNSRecords"
-	obj := configrmocks.GetObject(functionName)
-	err := mocks.GetError(functionName)
+	obj := envy.GetObject(functionName)
+	err := envy.GetError(functionName)
 	switch obj := obj.(type) {
 	case []sdk.DNSRecord:
 		return obj, err
@@ -81,8 +80,8 @@ func (c *MockCloudflareSDKClient) DNSRecords(ctx context.Context, zoneID string,
 // DNSRecord implements corresponding client function
 func (c *MockCloudflareSDKClient) DNSRecord(ctx context.Context, zoneID string, recordID string) (sdk.DNSRecord, error) {
 	functionName := "DNSRecord"
-	obj := configrmocks.GetObject(functionName)
-	err := mocks.GetError(functionName)
+	obj := envy.GetObject(functionName)
+	err := envy.GetError(functionName)
 	switch obj := obj.(type) {
 	case sdk.DNSRecord:
 		return obj, err
@@ -94,8 +93,8 @@ func (c *MockCloudflareSDKClient) DNSRecord(ctx context.Context, zoneID string, 
 // CreateDNSRecord implements corresponding client function
 func (c *MockCloudflareSDKClient) CreateDNSRecord(ctx context.Context, zoneID string, rr sdk.DNSRecord) (*sdk.DNSRecordResponse, error) {
 	functionName := "CreateDNSRecord"
-	obj := configrmocks.GetObject(functionName)
-	err := mocks.GetError(functionName)
+	obj := envy.GetObject(functionName)
+	err := envy.GetError(functionName)
 	switch obj := obj.(type) {
 	case *sdk.DNSRecordResponse:
 		return obj, err
@@ -107,14 +106,14 @@ func (c *MockCloudflareSDKClient) CreateDNSRecord(ctx context.Context, zoneID st
 // UpdateDNSRecord implements corresponding client function
 func (c *MockCloudflareSDKClient) UpdateDNSRecord(ctx context.Context, zoneID string, recordID string, rr sdk.DNSRecord) error {
 	functionName := "UpdateDNSRecord"
-	err := mocks.GetError(functionName)
+	err := envy.GetError(functionName)
 	return err
 }
 
 // DeleteDNSRecord implements corresponding client function
 func (c *MockCloudflareSDKClient) DeleteDNSRecord(ctx context.Context, zoneID string, recordID string) error {
 	functionName := "DeleteDNSRecord"
-	err := mocks.GetError(functionName)
+	err := envy.GetError(functionName)
 	return err
 }
 
