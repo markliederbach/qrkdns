@@ -58,11 +58,11 @@ func SyncCommand() *cli.Command {
 				Required: true,
 			},
 			&cli.StringFlag{
-				Name:    DomainFlag,
-				Aliases: []string{"d"},
-				Usage:   "Base domain used when constructing the host's subdomain",
-				EnvVars: []string{"DOMAIN_NAME"},
-				Value:   "qrkdns.net",
+				Name:     DomainFlag,
+				Aliases:  []string{"d"},
+				Usage:    "Base domain used when constructing the host's subdomain",
+				EnvVars:  []string{"DOMAIN_NAME"},
+				Required: true,
 			},
 			&cli.StringFlag{
 				Name:     CloudflareAccountIDFlag,

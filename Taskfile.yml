@@ -32,9 +32,15 @@ tasks:
         export network=$network
         stty echo
 
-        envsubst '$account,$token,$network' < .env.template > .env
+        printf "\n"
 
-        sed 's/"//g' .env > .env.docker
+        printf "Domain: "
+        read domain
+        export domain=$domain
+
+        envsubst '$account,$token,$network,$domain' < .env.template > .env
+
+        sed -e 's|["'\'']||g' .env > .env.docker
 
         unset token
         unset account

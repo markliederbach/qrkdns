@@ -20,7 +20,7 @@ var (
 		Name:     "test",
 		Content:  "foobar",
 		ZoneID:   "zone1234",
-		ZoneName: "qrkdns.net",
+		ZoneName: "foo.bar",
 		Proxied:  boolPtr(false),
 	}
 

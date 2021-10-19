@@ -53,6 +53,7 @@ func TestSync(t *testing.T) {
 				err := env.Load(
 					map[string]string{
 						"NETWORK_ID":            "xxx",
+						"DOMAIN_NAME":           "foo.bar",
 						"CLOUDFLARE_ACCOUNT_ID": "foo",
 						"CLOUDFLARE_API_TOKEN":  "bar",
 						"TIMEOUT":               "1s",
@@ -95,6 +96,7 @@ func TestSync(t *testing.T) {
 				err := env.Load(
 					map[string]string{
 						"NETWORK_ID":            "xxx",
+						"DOMAIN_NAME":           "foo.bar",
 						"CLOUDFLARE_ACCOUNT_ID": "foo",
 						"CLOUDFLARE_API_TOKEN":  "bar",
 						"TIMEOUT":               "badtimeout1234",
@@ -121,6 +123,7 @@ func TestSync(t *testing.T) {
 				err := env.Load(
 					map[string]string{
 						"NETWORK_ID":            "", // missing required flag
+						"DOMAIN_NAME":           "foo.bar",
 						"CLOUDFLARE_ACCOUNT_ID": "foo",
 						"CLOUDFLARE_API_TOKEN":  "bar",
 					},
@@ -146,6 +149,7 @@ func TestSync(t *testing.T) {
 				err := env.Load(
 					map[string]string{
 						"NETWORK_ID":            "xxx",
+						"DOMAIN_NAME":           "foo.bar",
 						"CLOUDFLARE_ACCOUNT_ID": "foo",
 						"CLOUDFLARE_API_TOKEN":  "bar",
 					},
@@ -177,6 +181,7 @@ func TestSync(t *testing.T) {
 				err := env.Load(
 					map[string]string{
 						"NETWORK_ID":            "xxx",
+						"DOMAIN_NAME":           "foo.bar",
 						"CLOUDFLARE_ACCOUNT_ID": "foo",
 						"CLOUDFLARE_API_TOKEN":  "bar",
 					},
@@ -214,6 +219,7 @@ func TestSync(t *testing.T) {
 				err := env.Load(
 					map[string]string{
 						"NETWORK_ID":            "xxx",
+						"DOMAIN_NAME":           "foo.bar",
 						"CLOUDFLARE_ACCOUNT_ID": "foo",
 						"CLOUDFLARE_API_TOKEN":  "bar",
 					},
@@ -245,6 +251,7 @@ func TestSync(t *testing.T) {
 				err := env.Load(
 					map[string]string{
 						"NETWORK_ID":            "xxx",
+						"DOMAIN_NAME":           "foo.bar",
 						"CLOUDFLARE_ACCOUNT_ID": "foo",
 						"CLOUDFLARE_API_TOKEN":  "bar",
 					},
@@ -301,6 +308,7 @@ func TestSyncCron(t *testing.T) {
 				err := env.Load(
 					map[string]string{
 						"NETWORK_ID":            "xxx",
+						"DOMAIN_NAME":           "foo.bar",
 						"CLOUDFLARE_ACCOUNT_ID": "foo",
 						"CLOUDFLARE_API_TOKEN":  "bar",
 						"TIMEOUT":               "1s",
@@ -328,6 +336,7 @@ func TestSyncCron(t *testing.T) {
 				err := env.Load(
 					map[string]string{
 						"NETWORK_ID":            "xxx",
+						"DOMAIN_NAME":           "foo.bar",
 						"CLOUDFLARE_ACCOUNT_ID": "foo",
 						"CLOUDFLARE_API_TOKEN":  "bar",
 						"TIMEOUT":               "1s",
@@ -355,6 +364,7 @@ func TestSyncCron(t *testing.T) {
 				err := env.Load(
 					map[string]string{
 						"NETWORK_ID":            "xxx",
+						"DOMAIN_NAME":           "foo.bar",
 						"CLOUDFLARE_ACCOUNT_ID": "foo",
 						"CLOUDFLARE_API_TOKEN":  "bar",
 						"TIMEOUT":               "1s",
