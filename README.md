@@ -5,6 +5,9 @@ This agent automatically discovers the current host's external IP address, and u
   - [Installation](#installation)
     - [Docker](#docker)
       - [Examples](#examples)
+- [Local Development](#local-development)
+  - [Testing](#testing)
+  - [Linting](#linting)
 
 # Getting Started
 ## Installation
@@ -41,3 +44,24 @@ docker run --env-file .env.docker --rm -it  ghcr.io/markliederbach/qrkdns:latest
   - `CLOUDFLARE_ACCOUNT_ID` - Account ID from Cloudflare
   - `CLOUDFLARE_API_TOKEN` - Secret API token, with permission to read/update DNS records
   - `SCHEDULE` - Cron pattern describing how often the sync job should be run
+
+
+# Local Development
+To develop on the source code, you'll need to install a few requisite packages:
+- [task](https://taskfile.dev/#/installation) - Used to run [defined tasks](https://github.com/markliederbach/qrkdns/blob/main/Taskfile.yml) for the project
+
+With `task`, and a compatible version of `go`, you can now run the following task to install project dependencies:
+```shell
+task deps
+```
+
+## Testing
+This application requires 100% code coverage on most files for all PRs and new Releases. To run the test suite, use this task:
+```shell
+task test
+```
+
+## Linting
+```shell
+task lint
+```
