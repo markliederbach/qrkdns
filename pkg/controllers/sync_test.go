@@ -73,7 +73,7 @@ func TestSync(t *testing.T) {
 				err = envy.AddObjectReturns(
 					"CreateDNSRecord",
 					&sdk.DNSRecordResponse{
-						Result: expectedRecord.ToCloudFlareDNSRecord(),
+						Result: cloudflare.ToCloudFlareDNSRecord(expectedRecord),
 					},
 				)
 				g.Expect(err).NotTo(HaveOccurred())
