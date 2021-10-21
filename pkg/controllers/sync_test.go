@@ -173,6 +173,60 @@ func TestSync(t *testing.T) {
 			},
 		},
 		{
+			testCase: "returns error for missing cloudflare flags",
+			runner: func(tt *testing.T) {
+				g := NewGomegaWithT(tt)
+
+				env := envy.MockEnv{}
+				err := env.Load(
+					map[string]string{
+						"NETWORK_ID":  "xxx",
+						"DOMAIN_NAME": "foo.bar",
+						"PROVIDER":    "cloudflare",
+						// "CLOUDFLARE_ACCOUNT_ID": "foo",
+						// "CLOUDFLARE_API_TOKEN":  "bar",
+						"TIMEOUT": "1s",
+					},
+				)
+				g.Expect(err).NotTo(HaveOccurred())
+				defer env.Restore()
+
+				app := controllers.NewQrkDNSApp(
+					"version123",
+					[]*cli.Command{controllers.SyncCommand()},
+				)
+
+				err = app.Run([]string{"qrkdns", "sync"})
+				g.Expect(err).To(MatchError("options [--cf-account-id, --cf-api-token] are required when using cloudflare provider"))
+			},
+		},
+		{
+			testCase: "returns error for missing cloudflare flags",
+			runner: func(tt *testing.T) {
+				g := NewGomegaWithT(tt)
+
+				env := envy.MockEnv{}
+				err := env.Load(
+					map[string]string{
+						"NETWORK_ID":  "xxx",
+						"DOMAIN_NAME": "foo.bar",
+						"PROVIDER":    "unsupportedprovider",
+						"TIMEOUT":     "1s",
+					},
+				)
+				g.Expect(err).NotTo(HaveOccurred())
+				defer env.Restore()
+
+				app := controllers.NewQrkDNSApp(
+					"version123",
+					[]*cli.Command{controllers.SyncCommand()},
+				)
+
+				err = app.Run([]string{"qrkdns", "sync"})
+				g.Expect(err).To(MatchError("unsupported DNS client: unsupportedprovider"))
+			},
+		},
+		{
 			testCase: "panics for new ip client error",
 			runner: func(tt *testing.T) {
 				g := NewGomegaWithT(tt)

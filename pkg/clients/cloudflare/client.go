@@ -39,14 +39,14 @@ func withTokenLoader(token string) LoadOption {
 }
 
 // NewClientWithToken is an initializer specifically for using an API token
-func NewClientWithToken(ctx context.Context, accountID, domain, token string, opts ...LoadOption) (DefaultClient, error) {
+func NewClientWithToken(ctx context.Context, accountID, domain, token string, opts ...LoadOption) (*DefaultClient, error) {
 	newOpts := []LoadOption{withTokenLoader(token)}
 	newOpts = append(newOpts, opts...)
 	return newClient(ctx, accountID, domain, newOpts...)
 }
 
 // newClient returns a new cloudflare client based on credentials
-func newClient(ctx context.Context, accountID, domain string, opts ...LoadOption) (DefaultClient, error) {
+func newClient(ctx context.Context, accountID, domain string, opts ...LoadOption) (*DefaultClient, error) {
 	client := DefaultClient{
 		Client:     &sdk.API{},
 		AccountID:  accountID,
@@ -56,17 +56,17 @@ func newClient(ctx context.Context, accountID, domain string, opts ...LoadOption
 
 	for _, opt := range opts {
 		if err := opt(&client); err != nil {
-			return DefaultClient{}, err
+			return &DefaultClient{}, err
 		}
 	}
 
 	// Preload Zone ID
 	_, err := client.GetZoneID(ctx)
 	if err != nil {
-		return DefaultClient{}, err
+		return &DefaultClient{}, err
 	}
 
-	return client, nil
+	return &client, nil
 }
 
 // GetZoneID returns and caches the Zone ID for the current client
