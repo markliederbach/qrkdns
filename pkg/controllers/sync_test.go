@@ -201,7 +201,7 @@ func TestSync(t *testing.T) {
 			},
 		},
 		{
-			testCase: "returns error for missing cloudflare flags",
+			testCase: "returns error for unsupported DNS provider",
 			runner: func(tt *testing.T) {
 				g := NewGomegaWithT(tt)
 
