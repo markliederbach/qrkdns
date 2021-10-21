@@ -3,10 +3,14 @@ package cloudflare
 import (
 	"context"
 	"fmt"
-	"reflect"
 
 	sdk "github.com/cloudflare/cloudflare-go"
+	"github.com/markliederbach/qrkdns/pkg/clients/dns"
 	log "github.com/sirupsen/logrus"
+)
+
+var (
+	_ dns.Provider = &DefaultClient{}
 )
 
 // DefaultClient implements the cloudflare client
@@ -16,25 +20,6 @@ type DefaultClient struct {
 	AccountID  string
 	DomainName string
 	ZoneID     string
-}
-
-// RecordType wraps the various DNS Record types
-type RecordType string
-
-const (
-	// RecordTypeA is the DNS record type A
-	RecordTypeA RecordType = "A"
-)
-
-// DNSRecord stores only the managed fields from the
-// Cloudflare DNSRecord struct
-type DNSRecord struct {
-	ID      string     `json:"id"`
-	Type    RecordType `json:"type"`
-	Name    string     `json:"name"`
-	Content string     `json:"content"`
-	TTL     int        `json:"ttl"`
-	Proxied bool       `json:"proxied"`
 }
 
 // LoadOption allows for modifying the client after it's created
@@ -54,14 +39,14 @@ func withTokenLoader(token string) LoadOption {
 }
 
 // NewClientWithToken is an initializer specifically for using an API token
-func NewClientWithToken(ctx context.Context, accountID, domain, token string, opts ...LoadOption) (DefaultClient, error) {
+func NewClientWithToken(ctx context.Context, accountID, domain, token string, opts ...LoadOption) (*DefaultClient, error) {
 	newOpts := []LoadOption{withTokenLoader(token)}
 	newOpts = append(newOpts, opts...)
 	return newClient(ctx, accountID, domain, newOpts...)
 }
 
 // newClient returns a new cloudflare client based on credentials
-func newClient(ctx context.Context, accountID, domain string, opts ...LoadOption) (DefaultClient, error) {
+func newClient(ctx context.Context, accountID, domain string, opts ...LoadOption) (*DefaultClient, error) {
 	client := DefaultClient{
 		Client:     &sdk.API{},
 		AccountID:  accountID,
@@ -71,17 +56,17 @@ func newClient(ctx context.Context, accountID, domain string, opts ...LoadOption
 
 	for _, opt := range opts {
 		if err := opt(&client); err != nil {
-			return DefaultClient{}, err
+			return &DefaultClient{}, err
 		}
 	}
 
 	// Preload Zone ID
 	_, err := client.GetZoneID(ctx)
 	if err != nil {
-		return DefaultClient{}, err
+		return &DefaultClient{}, err
 	}
 
-	return client, nil
+	return &client, nil
 }
 
 // GetZoneID returns and caches the Zone ID for the current client
@@ -101,7 +86,7 @@ func (c *DefaultClient) GetZoneID(ctx context.Context) (string, error) {
 
 // ListDNSARecords returns all DNS records for the provided subdomain
 func (c *DefaultClient) ListDNSARecords(ctx context.Context, subdomain string) ([]sdk.DNSRecord, error) {
-	records, err := c.Client.DNSRecords(ctx, c.ZoneID, sdk.DNSRecord{Type: string(RecordTypeA), Name: fqdn(subdomain, c.DomainName)})
+	records, err := c.Client.DNSRecords(ctx, c.ZoneID, sdk.DNSRecord{Type: string(dns.RecordTypeA), Name: fqdn(subdomain, c.DomainName)})
 	if err != nil {
 		return []sdk.DNSRecord{}, err
 	}
@@ -110,28 +95,28 @@ func (c *DefaultClient) ListDNSARecords(ctx context.Context, subdomain string) (
 }
 
 // GetDNSRecord retrieves a DNS record by ID
-func (c *DefaultClient) GetDNSRecord(ctx context.Context, recordID string) (DNSRecord, error) {
+func (c *DefaultClient) GetDNSRecord(ctx context.Context, recordID string) (dns.Record, error) {
 	response, err := c.Client.DNSRecord(ctx, c.ZoneID, recordID)
 	if err != nil {
-		return DNSRecord{}, err
+		return dns.Record{}, err
 	}
 
 	return FromCloudFlareDNSRecord(response), nil
 }
 
 // CreateDNSARecord creates a new DNS A record for the provided subdomain and IP Address
-func (c *DefaultClient) CreateDNSARecord(ctx context.Context, record DNSRecord) (DNSRecord, error) {
-	response, err := c.Client.CreateDNSRecord(ctx, c.ZoneID, record.ToCloudFlareDNSRecord())
+func (c *DefaultClient) CreateDNSARecord(ctx context.Context, record dns.Record) (dns.Record, error) {
+	response, err := c.Client.CreateDNSRecord(ctx, c.ZoneID, ToCloudFlareDNSRecord(record))
 	if err != nil {
-		return DNSRecord{}, err
+		return dns.Record{}, err
 	}
 
 	return FromCloudFlareDNSRecord(response.Result), nil
 }
 
 // UpdateDNSARecord updates an existing DNS A record for the provided subdomain and IP Address
-func (c *DefaultClient) UpdateDNSARecord(ctx context.Context, recordID string, record DNSRecord) error {
-	err := c.Client.UpdateDNSRecord(ctx, c.ZoneID, recordID, record.ToCloudFlareDNSRecord())
+func (c *DefaultClient) UpdateDNSARecord(ctx context.Context, recordID string, record dns.Record) error {
+	err := c.Client.UpdateDNSRecord(ctx, c.ZoneID, recordID, ToCloudFlareDNSRecord(record))
 	if err != nil {
 		return err
 	}
@@ -140,7 +125,7 @@ func (c *DefaultClient) UpdateDNSARecord(ctx context.Context, recordID string, r
 }
 
 // DeleteDNSARecord deletes an existing DNS A record for the provided record ID
-func (c *DefaultClient) DeleteDNSARecord(ctx context.Context, record DNSRecord) error {
+func (c *DefaultClient) DeleteDNSARecord(ctx context.Context, record dns.Record) error {
 	err := c.Client.DeleteDNSRecord(ctx, c.ZoneID, record.ID)
 	if err != nil {
 		return err
@@ -151,18 +136,18 @@ func (c *DefaultClient) DeleteDNSARecord(ctx context.Context, record DNSRecord) 
 
 // ApplyDNSARecord creates or updates a DNS record without creating a duplicate. It will also delete
 // other A records for the domain that don't match the provided IP address
-func (c *DefaultClient) ApplyDNSARecord(ctx context.Context, subdomain, ipAddress string) (DNSRecord, error) {
+func (c *DefaultClient) ApplyDNSARecord(ctx context.Context, subdomain, ipAddress string) (dns.Record, error) {
 	expectedRecord := BuildDNSARecord(subdomain, c.DomainName, ipAddress)
 	contextLog := log.WithField("expected_record", expectedRecord)
 
 	sdkRecords, err := c.ListDNSARecords(ctx, subdomain)
 	if err != nil {
-		return DNSRecord{}, err
+		return dns.Record{}, err
 	}
 
 	existingRecords := ConvertDNSRecordList(sdkRecords)
 
-	chosenRecord := DNSRecord{}
+	chosenRecord := dns.Record{}
 
 	// First, look for any record with a matching IP address because
 	// Cloudflare's unique key is (name, content)
@@ -176,7 +161,7 @@ func (c *DefaultClient) ApplyDNSARecord(ctx context.Context, subdomain, ipAddres
 	}
 
 	// If we found a matching record, check if it needs to be updated
-	if !chosenRecord.Equal(DNSRecord{}, false) {
+	if !chosenRecord.Equal(dns.Record{}, false) {
 
 		contextLog = contextLog.WithField("chosen_record", chosenRecord)
 
@@ -184,13 +169,13 @@ func (c *DefaultClient) ApplyDNSARecord(ctx context.Context, subdomain, ipAddres
 			contextLog.Debugf("Updating record")
 			err = c.UpdateDNSARecord(ctx, chosenRecord.ID, expectedRecord)
 			if err != nil {
-				return DNSRecord{}, err
+				return dns.Record{}, err
 			}
 
 			// Update local copy of record
 			chosenRecord, err = c.GetDNSRecord(ctx, chosenRecord.ID)
 			if err != nil {
-				return DNSRecord{}, err
+				return dns.Record{}, err
 			}
 		} else {
 			contextLog.Debugf("Record is already up to date")
@@ -200,7 +185,7 @@ func (c *DefaultClient) ApplyDNSARecord(ctx context.Context, subdomain, ipAddres
 		contextLog.Debugf("Creating new record")
 		chosenRecord, err = c.CreateDNSARecord(ctx, expectedRecord)
 		if err != nil {
-			return DNSRecord{}, err
+			return dns.Record{}, err
 		}
 		contextLog = contextLog.WithField("chosen_record", chosenRecord)
 	}
@@ -215,7 +200,7 @@ func (c *DefaultClient) ApplyDNSARecord(ctx context.Context, subdomain, ipAddres
 		contextLog.WithField("existing_record", record).Debugf("Deleting extra record")
 		err = c.DeleteDNSARecord(ctx, record)
 		if err != nil {
-			return DNSRecord{}, err
+			return dns.Record{}, err
 		}
 	}
 
@@ -223,9 +208,9 @@ func (c *DefaultClient) ApplyDNSARecord(ctx context.Context, subdomain, ipAddres
 }
 
 // BuildDNSARecord constructs a consistent DNS record across the client
-func BuildDNSARecord(subdomain, domainName, ipAddress string) DNSRecord {
-	return DNSRecord{
-		Type:    RecordTypeA,
+func BuildDNSARecord(subdomain, domainName, ipAddress string) dns.Record {
+	return dns.Record{
+		Type:    dns.RecordTypeA,
 		Name:    fqdn(subdomain, domainName),
 		Content: ipAddress,
 		TTL:     1,
@@ -240,8 +225,8 @@ func fqdn(subdomain, domainName string) string {
 
 // ConvertDNSRecordList converts a list of Cloudflare DNS records to
 // locally-managed DNS Records
-func ConvertDNSRecordList(sdkRecords []sdk.DNSRecord) []DNSRecord {
-	records := []DNSRecord{}
+func ConvertDNSRecordList(sdkRecords []sdk.DNSRecord) []dns.Record {
+	records := []dns.Record{}
 	for _, record := range sdkRecords {
 		records = append(records, FromCloudFlareDNSRecord(record))
 	}
@@ -250,10 +235,10 @@ func ConvertDNSRecordList(sdkRecords []sdk.DNSRecord) []DNSRecord {
 
 // FromCloudFlareDNSRecord converts a CloudFlare DNS Record struct to
 // one managed and controlled by this client
-func FromCloudFlareDNSRecord(record sdk.DNSRecord) DNSRecord {
-	return DNSRecord{
+func FromCloudFlareDNSRecord(record sdk.DNSRecord) dns.Record {
+	return dns.Record{
 		ID:      record.ID,
-		Type:    RecordType(record.Type),
+		Type:    dns.RecordType(record.Type),
 		Name:    record.Name,
 		Content: record.Content,
 		TTL:     record.TTL,
@@ -263,22 +248,13 @@ func FromCloudFlareDNSRecord(record sdk.DNSRecord) DNSRecord {
 
 // ToCloudFlareDNSRecord converts a local DNS record to one accepted
 // by the CloudFlare SDK
-func (d *DNSRecord) ToCloudFlareDNSRecord() sdk.DNSRecord {
+func ToCloudFlareDNSRecord(record dns.Record) sdk.DNSRecord {
 	return sdk.DNSRecord{
-		ID:      d.ID,
-		Type:    string(d.Type),
-		Name:    d.Name,
-		Content: d.Content,
-		TTL:     d.TTL,
-		Proxied: &d.Proxied,
+		ID:      record.ID,
+		Type:    string(record.Type),
+		Name:    record.Name,
+		Content: record.Content,
+		TTL:     record.TTL,
+		Proxied: &record.Proxied,
 	}
-}
-
-// Equal checks whether two records are equal (except for unmanaged fields)
-func (d *DNSRecord) Equal(other DNSRecord, matchID bool) bool {
-	if !matchID {
-		// Temporarily copy ID
-		other.ID = d.ID
-	}
-	return reflect.DeepEqual(*d, other)
 }

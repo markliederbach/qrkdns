@@ -2,9 +2,12 @@ package controllers
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/markliederbach/qrkdns/pkg/clients/cloudflare"
+	"github.com/markliederbach/qrkdns/pkg/clients/dns"
 	"github.com/markliederbach/qrkdns/pkg/clients/ip"
 	"github.com/markliederbach/qrkdns/pkg/clients/scheduler"
 	log "github.com/sirupsen/logrus"
@@ -26,6 +29,9 @@ const (
 
 	// DomainFlag wraps the name of the command flag
 	DomainFlag string = "domain"
+
+	// ProviderTypeFlag wraps the name of the command flag
+	ProviderTypeFlag string = "provider"
 
 	// CloudflareAccountIDFlag wraps the name of the command flag
 	CloudflareAccountIDFlag string = "cf-account-id"
@@ -65,18 +71,23 @@ func SyncCommand() *cli.Command {
 				Required: true,
 			},
 			&cli.StringFlag{
-				Name:     CloudflareAccountIDFlag,
-				Aliases:  []string{"a"},
-				Usage:    "Cloudflare Account ID used in conjunction with the API token",
-				EnvVars:  []string{"CLOUDFLARE_ACCOUNT_ID"},
-				Required: true,
+				Name:    ProviderTypeFlag,
+				Aliases: []string{"p"},
+				Usage:   fmt.Sprintf("Type of provider to use (one of: %v)", getSupportedProvidersString()),
+				EnvVars: []string{"PROVIDER"},
+				Value:   string(dns.ProviderTypeCloudflare),
 			},
 			&cli.StringFlag{
-				Name:     CloudflareAPITokenFlag,
-				Aliases:  []string{"t"},
-				Usage:    "Cloudflare API token providing scoped permisions for DNS management",
-				EnvVars:  []string{"CLOUDFLARE_API_TOKEN"},
-				Required: true,
+				Name:    CloudflareAccountIDFlag,
+				Aliases: []string{"a"},
+				Usage:   "Cloudflare Account ID used in conjunction with the API token",
+				EnvVars: []string{"CLOUDFLARE_ACCOUNT_ID"},
+			},
+			&cli.StringFlag{
+				Name:    CloudflareAPITokenFlag,
+				Aliases: []string{"t"},
+				Usage:   "Cloudflare API token providing scoped permisions for DNS management",
+				EnvVars: []string{"CLOUDFLARE_API_TOKEN"},
 			},
 			&cli.StringFlag{
 				Name:    IPServiceURLFlag,
@@ -111,13 +122,14 @@ func SyncCommand() *cli.Command {
 	}
 }
 
+// syncOnce performs a single sync task. Each sync consists of
+// retrieving the external IP Address of this host and applying
+// the result as a DNS A record to the specified provider through a
+// dedicated API client.
 func syncOnce(c *cli.Context) error {
 	var cancel context.CancelFunc
 
 	ctx := c.Context
-	accountID := c.String(CloudflareAccountIDFlag)
-	domain := c.String(DomainFlag)
-	apiToken := c.String(CloudflareAPITokenFlag)
 	ipServiceURL := c.String(IPServiceURLFlag)
 	networkID := c.String(NetworkIDFlag)
 	timeoutString := c.String(TimeoutFlag)
@@ -131,13 +143,7 @@ func syncOnce(c *cli.Context) error {
 		defer cancel()
 	}
 
-	cloudflareClient, err := cloudflare.NewClientWithToken(
-		ctx,
-		accountID,
-		domain,
-		apiToken,
-		CloudflareClientOptions...,
-	)
+	dnsClient, err := buildDNSProvider(c)
 	if err != nil {
 		return err
 	}
@@ -152,7 +158,7 @@ func syncOnce(c *cli.Context) error {
 		return err
 	}
 
-	_, err = cloudflareClient.ApplyDNSARecord(ctx, networkID, externalIP)
+	_, err = dnsClient.ApplyDNSARecord(ctx, networkID, externalIP)
 	if err != nil {
 		return err
 	}
@@ -161,6 +167,7 @@ func syncOnce(c *cli.Context) error {
 	return nil
 }
 
+// syncCron runs the syncOnce task at the specified cron schedule
 func syncCron(c *cli.Context) error {
 	scheduleCron := c.String(ScheduleFlag)
 
@@ -182,4 +189,81 @@ func syncCron(c *cli.Context) error {
 	clientScheduler.StartBlocking() // does not return
 
 	return nil
+}
+
+// buildDNSProvider determines which provider to create and returns
+// an instantiated provider client
+func buildDNSProvider(c *cli.Context) (dns.Provider, error) {
+	var dnsClient dns.Provider
+	var err error
+
+	ctx := c.Context
+	providerType := c.String(ProviderTypeFlag)
+
+	switch dns.ProviderType(providerType) {
+	case dns.ProviderTypeCloudflare:
+		var cloudflareOptions map[string]string
+
+		domain := c.String(DomainFlag)
+		cloudflareOptions, err = stringsOrError(
+			c,
+			fmt.Sprintf("using %s provider", dns.ProviderTypeCloudflare),
+			CloudflareAccountIDFlag,
+			CloudflareAPITokenFlag,
+		)
+		if err != nil {
+			return dnsClient, err
+		}
+
+		dnsClient, err = cloudflare.NewClientWithToken(
+			ctx,
+			cloudflareOptions[CloudflareAccountIDFlag],
+			domain,
+			cloudflareOptions[CloudflareAPITokenFlag],
+			CloudflareClientOptions...,
+		)
+		if err != nil {
+			return dnsClient, err
+		}
+	default:
+		return dnsClient, fmt.Errorf("unsupported DNS client: %v", providerType)
+	}
+	return dnsClient, nil
+}
+
+// getSupportedProvidersString returns the supported provider types
+// as a comma-separated string
+func getSupportedProvidersString() string {
+	stringProviders := []string{}
+	for _, provider := range dns.SuportedProviders {
+		stringProviders = append(stringProviders, string(provider))
+	}
+	return strings.Join(stringProviders, ", ")
+}
+
+// stringsOrError attempts to load a list of options from the CLI, and reports
+// back any missing presumably required options
+func stringsOrError(c *cli.Context, whenMessage string, options ...string) (map[string]string, error) {
+	results := make(map[string]string)
+	missingOptions := []string{}
+	for _, option := range options {
+		value := c.String(option)
+		if value == "" {
+			missingOptions = append(missingOptions, option)
+			continue
+		}
+		results[option] = value
+	}
+	if len(missingOptions) > 0 {
+		formattedOptions := []string{}
+		for _, option := range options {
+			formattedOptions = append(formattedOptions, fmt.Sprintf("--%v", option))
+		}
+		return make(map[string]string), fmt.Errorf(
+			"options [%v] are required when %v",
+			strings.Join(formattedOptions, ", "),
+			whenMessage,
+		)
+	}
+	return results, nil
 }

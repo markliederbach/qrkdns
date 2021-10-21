@@ -175,7 +175,7 @@ func TestFile(t *testing.T) {
 				err = envy.AddObjectReturns(
 					"CreateDNSRecord",
 					&sdk.DNSRecordResponse{
-						Result: expectedRecord.ToCloudFlareDNSRecord(),
+						Result: cloudflare.ToCloudFlareDNSRecord(expectedRecord),
 					},
 				)
 				g.Expect(err).NotTo(HaveOccurred())
@@ -209,15 +209,15 @@ func TestFile(t *testing.T) {
 				err = envy.AddObjectReturns(
 					"DNSRecords",
 					[]sdk.DNSRecord{
-						updateRecord.ToCloudFlareDNSRecord(),
-						deleteRecord.ToCloudFlareDNSRecord(),
+						cloudflare.ToCloudFlareDNSRecord(updateRecord),
+						cloudflare.ToCloudFlareDNSRecord(deleteRecord),
 					},
 				)
 				g.Expect(err).NotTo(HaveOccurred())
 
 				err = envy.AddObjectReturns(
 					"DNSRecord",
-					updateRecord.ToCloudFlareDNSRecord(),
+					cloudflare.ToCloudFlareDNSRecord(updateRecord),
 				)
 				g.Expect(err).NotTo(HaveOccurred())
 
@@ -251,8 +251,8 @@ func TestFile(t *testing.T) {
 				err = envy.AddObjectReturns(
 					"DNSRecords",
 					[]sdk.DNSRecord{
-						equalRecord.ToCloudFlareDNSRecord(),
-						deleteRecord.ToCloudFlareDNSRecord(),
+						cloudflare.ToCloudFlareDNSRecord(equalRecord),
+						cloudflare.ToCloudFlareDNSRecord(deleteRecord),
 					},
 				)
 				g.Expect(err).NotTo(HaveOccurred())
@@ -284,7 +284,7 @@ func TestFile(t *testing.T) {
 				err = envy.AddObjectReturns(
 					"DNSRecords",
 					[]sdk.DNSRecord{
-						updateRecord.ToCloudFlareDNSRecord(),
+						cloudflare.ToCloudFlareDNSRecord(updateRecord),
 					},
 				)
 				g.Expect(err).NotTo(HaveOccurred())
@@ -321,7 +321,7 @@ func TestFile(t *testing.T) {
 				err = envy.AddObjectReturns(
 					"DNSRecords",
 					[]sdk.DNSRecord{
-						updateRecord.ToCloudFlareDNSRecord(),
+						cloudflare.ToCloudFlareDNSRecord(updateRecord),
 					},
 				)
 				g.Expect(err).NotTo(HaveOccurred())
@@ -358,8 +358,8 @@ func TestFile(t *testing.T) {
 				err = envy.AddObjectReturns(
 					"DNSRecords",
 					[]sdk.DNSRecord{
-						existingRecord.ToCloudFlareDNSRecord(),
-						deleteRecord.ToCloudFlareDNSRecord(),
+						cloudflare.ToCloudFlareDNSRecord(existingRecord),
+						cloudflare.ToCloudFlareDNSRecord(deleteRecord),
 					},
 				)
 				g.Expect(err).NotTo(HaveOccurred())
