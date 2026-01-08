@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 )
 
@@ -46,7 +46,7 @@ func (c *DefaultClient) GetExternalIPAddress(ctx context.Context) (string, error
 		_ = response.Body.Close()
 	}()
 
-	body, err := ioutil.ReadAll(response.Body)
+	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		return "", err
 	}
@@ -54,7 +54,7 @@ func (c *DefaultClient) GetExternalIPAddress(ctx context.Context) (string, error
 	trimmedBody := string(bytes.TrimSpace(body))
 
 	if response.StatusCode != 200 {
-		return "", fmt.Errorf("Received status code %v: %v", response.StatusCode, trimmedBody)
+		return "", fmt.Errorf("received status code %v: %v", response.StatusCode, trimmedBody)
 	}
 	return trimmedBody, nil
 }

@@ -1,0 +1,76 @@
+---
+globs: *_test.go
+---
+# Testing Conventions
+
+## Test Framework
+
+- Use Go's standard `testing` package with `gomega` assertions
+- Import gomega with dot notation: `. "github.com/onsi/gomega"`
+- Initialize per-test with `g := NewGomegaWithT(tt)`
+
+## Test Structure
+
+Use table-driven tests with the `testRunner` pattern:
+
+```go
+type testRunner struct {
+    testCase string
+    runner   func(tt *testing.T)
+}
+
+func TestFile(t *testing.T) {
+    tests := []testRunner{
+        {
+            testCase: "describes what this test verifies",
+            runner: func(tt *testing.T) {
+                g := NewGomegaWithT(tt)
+                // test implementation
+            },
+        },
+    }
+    for _, test := range tests {
+        test := test  // capture range variable
+        t.Run(test.testCase, test.runner)
+    }
+}
+```
+
+## Mocking Strategy
+
+1. **Mock Injection via LoadOptions**:
+   - Create mock implementations in `pkg/mocks/`
+   - Inject mocks using `LoadOption` functions:
+     ```go
+     func withMockSDKClient(client *cloudflare.DefaultClient) error {
+         client.Client = &mocks.MockCloudflareSDKClient{}
+         return nil
+     }
+     ```
+
+2. **go-envy for Dynamic Mocking**:
+   - Use `envy.AddObjectReturns()` to set return values
+   - Use `envy.AddErrorReturns()` to simulate errors
+   - Values are consumed in order (queue-based)
+
+## Assertions
+
+Common gomega matchers:
+```go
+g.Expect(err).NotTo(HaveOccurred())
+g.Expect(err).To(HaveOccurred())
+g.Expect(err).To(MatchError("expected message"))
+g.Expect(result).To(Equal(expected))
+```
+
+## Coverage Requirements
+
+- **100% code coverage required** for `pkg/` packages
+- Coverage excludes: `mocks/`, `cmds/`
+- Run tests with: `task test` (uses `-coverpkg=./...`)
+
+## Test Naming
+
+- Use descriptive lowercase test case names
+- Name should describe the behavior being tested, not the method
+- Example: `"returns cached zone ID"` not `"TestGetZoneID"`
