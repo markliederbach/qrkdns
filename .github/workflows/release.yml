@@ -10,20 +10,16 @@ jobs:
     name: Linting
     runs-on: ubuntu-latest
     steps:
-      - name: Setup Taskfile
-        uses: arduino/setup-task@main
-        with:
-          version: "3.x"
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: "~1.16"
+          go-version: "1.25"
       - name: Checkout
         uses: actions/checkout@main
-      - name: Dependencies
-        run: task deps
       - name: Lint
-        run: task lint
+        uses: golangci/golangci-lint-action@v7
+        with:
+          version: v2.6.0
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
@@ -35,7 +31,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: "~1.16"
+          go-version: "1.25"
       - name: Checkout
         uses: actions/checkout@main
       - name: Dependencies
@@ -53,7 +49,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: "~1.16"
+          go-version: "1.25"
       - name: Checkout
         uses: actions/checkout@main
       - name: Check Goreleaser
@@ -76,7 +72,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: "~1.16"
+          go-version: "1.25"
       - name: Checkout
         uses: actions/checkout@main
         with:
@@ -104,7 +100,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: "~1.16"
+          go-version: "1.25"
       - name: Checkout
         uses: actions/checkout@main
         with:

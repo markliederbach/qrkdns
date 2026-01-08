@@ -1,0 +1,38 @@
+---
+alwaysApply: true
+---
+# QRKDNS Project Structure
+
+This is a Go CLI application that automatically syncs external IP addresses to Cloudflare DNS A records.
+
+## Entry Points
+
+- [main.go](mdc:cmds/qrkdns/main.go) - CLI entry point using `urfave/cli/v2`
+- [app.go](mdc:pkg/controllers/app.go) - App initialization with global flags
+- [sync.go](mdc:pkg/controllers/sync.go) - Main sync command and subcommands
+
+## Package Organization
+
+```
+cmds/qrkdns/     # CLI entry point
+pkg/
+├── clients/     # External API clients
+│   ├── cloudflare/  # Cloudflare DNS API client
+│   ├── dns/         # DNS provider interface and types
+│   ├── ip/          # External IP lookup client
+│   └── scheduler/   # Cron scheduler client
+├── controllers/ # CLI command handlers
+└── mocks/       # Mock implementations for testing
+```
+
+## Key Patterns
+
+1. **Interface Abstraction**: SDK clients are wrapped with interfaces (e.g., `SDKClient` in [api.go](mdc:pkg/clients/cloudflare/api.go)) to enable testing
+2. **Functional Options**: Use `LoadOption` pattern for client initialization (see [client.go](mdc:pkg/clients/cloudflare/client.go))
+3. **Dependency Injection**: Controllers use package-level option slices for test injection (e.g., `CloudflareClientOptions`)
+
+## Build & Development
+
+- Uses [Taskfile.yml](mdc:Taskfile.yml) for task automation
+- Uses vendored dependencies (`vendor/` directory, `-mod=vendor` flag)
+- Requires **100% code coverage** for non-mock/non-cmd packages

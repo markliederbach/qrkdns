@@ -1,0 +1,67 @@
+---
+globs: *.go
+---
+# Go Coding Conventions
+
+## Imports
+
+- Use aliased imports for external packages when clarity is needed:
+  ```go
+  sdk "github.com/cloudflare/cloudflare-go"
+  log "github.com/sirupsen/logrus"
+  ```
+- Group imports: stdlib, external, internal (separated by blank lines)
+
+## Error Handling
+
+- Return errors immediately without wrapping for simple cases
+- Use `fmt.Errorf` for contextual error messages
+- Always check and return errors from function calls
+
+## Context Usage
+
+- Pass `context.Context` as the first parameter to functions that:
+  - Make network calls
+  - May need cancellation/timeout
+  - Call other context-aware functions
+- Use `context.WithTimeout` for operations with time constraints
+
+## Logging
+
+- Use `logrus` (aliased as `log`) with JSON formatting
+- Use structured logging with `WithField`/`WithFields`:
+  ```go
+  log.WithField("record", record).Debug("Processing record")
+  ```
+
+## Client Pattern
+
+Follow the established client pattern in `pkg/clients/`:
+
+1. **Interface Definition** (`api.go`):
+   - Define interfaces for external SDK clients
+   - Use compile-time interface verification: `var _ Interface = &Implementation{}`
+
+2. **Implementation** (`client.go`):
+   - Use `DefaultClient` naming for primary implementation
+   - Implement functional options with `LoadOption`:
+     ```go
+     type LoadOption func(client *DefaultClient) error
+     ```
+   - Constructor should apply options and perform initialization
+
+3. **Provider Interface** in [dns/api.go](mdc:pkg/clients/dns/api.go):
+   - Clients implementing DNS operations should satisfy `dns.Provider`
+
+## CLI Commands
+
+- Use `urfave/cli/v2` for command definitions
+- Define flag names as constants (e.g., `NetworkIDFlag string = "network-id"`)
+- Support both CLI flags and environment variables for configuration
+- Use `EnvVars` slice for environment variable support
+
+## Code Style
+
+- Use camelCase for private identifiers, PascalCase for exported
+- Document exported functions, types, and constants
+- Avoid global state; use dependency injection for testability

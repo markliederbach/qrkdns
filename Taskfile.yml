@@ -156,7 +156,7 @@ tasks:
   goreleaser:build:
     desc: Build a snapshot locally
     cmds:
-      - ${GOPATH}/bin/goreleaser build --snapshot --rm-dist
+      - ${GOPATH}/bin/goreleaser build --snapshot --clean
     preconditions:
       - sh: ${GOPATH}/bin/goreleaser --version
         msg: Run `task deps` to install Go tools

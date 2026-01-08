@@ -1,7 +1,7 @@
 ################################
 # STEP 1 build binary
 ################################
-FROM golang:1.17-alpine as builder
+FROM golang:1.25-alpine as builder
 ARG VERSION=latest
 
 RUN adduser --uid 1500 -D qrkdns
