@@ -1,3 +1,5 @@
+version: 2
+
 before:
   hooks:
     # you may remove this if you don't need go generate
@@ -22,7 +24,7 @@ builds:
 checksum:
   name_template: "checksums.txt"
 snapshot:
-  name_template: "{{ .Version }}-dev"
+  version_template: "{{ .Version }}-dev"
 release:
   github:
     owner: markliederbach
