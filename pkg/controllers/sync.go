@@ -137,33 +137,41 @@ func syncOnce(c *cli.Context) error {
 	if timeoutString != "" {
 		timeoutDuration, err := time.ParseDuration(timeoutString)
 		if err != nil {
+			log.WithError(err).Error("Failed to parse timeout duration")
 			return err
 		}
+		log.WithField("timeout", timeoutDuration).Debug("Setting timeout")
 		ctx, cancel = context.WithTimeout(c.Context, timeoutDuration)
 		defer cancel()
 	}
 
 	dnsClient, err := buildDNSProvider(c)
 	if err != nil {
+		log.WithError(err).Error("Failed to build DNS client")
 		return err
 	}
 
 	ipClient, err := ip.NewClient(ipServiceURL, IPClientOptions...)
 	if err != nil {
+		log.WithError(err).Error("Failed to build IP client")
 		return err
 	}
 
 	externalIP, err := ipClient.GetExternalIPAddress(ctx)
 	if err != nil {
+		log.WithError(err).Error("Failed to get external IP address")
 		return err
 	}
+
+	log.WithField("externalIP", externalIP).Debug("External IP address retrieved")
 
 	_, err = dnsClient.ApplyDNSARecord(ctx, networkID, externalIP)
 	if err != nil {
+		log.WithError(err).Error("Failed to apply DNS A record")
 		return err
 	}
 
-	log.Infof("Sync complete")
+	log.Info("Sync complete")
 	return nil
 }
 
