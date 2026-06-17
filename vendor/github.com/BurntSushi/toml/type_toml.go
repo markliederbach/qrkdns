@@ -16,19 +16,14 @@ func typeEqual(t1, t2 tomlType) bool {
 	return t1.typeString() == t2.typeString()
 }
 
-func typeIsHash(t tomlType) bool {
+func typeIsTable(t tomlType) bool {
 	return typeEqual(t, tomlHash) || typeEqual(t, tomlArrayHash)
 }
 
 type tomlBaseType string
 
-func (btype tomlBaseType) typeString() string {
-	return string(btype)
-}
-
-func (btype tomlBaseType) String() string {
-	return btype.typeString()
-}
+func (btype tomlBaseType) typeString() string { return string(btype) }
+func (btype tomlBaseType) String() string     { return btype.typeString() }
 
 var (
 	tomlInteger   tomlBaseType = "Integer"
@@ -54,7 +49,7 @@ func (p *parser) typeOfPrimitive(lexItem item) tomlType {
 		return tomlFloat
 	case itemDatetime:
 		return tomlDatetime
-	case itemString:
+	case itemString, itemStringEsc:
 		return tomlString
 	case itemMultilineString:
 		return tomlString
