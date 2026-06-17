@@ -1,19 +1,50 @@
+version: "2"
 run:
-
-  # timeout for analysis, e.g. 30s, 5m, default is 1m
-  timeout: 1m
-
-  # exit code when at least one issue was found, default is 1
-  issues-exit-code: 1
-
-  # include test files or not, default is true
-  tests: true
-
-  # default is true. Enables skipping of directories:
-  #   vendor$, third_party$, testdata$, examples$, Godeps$, builtin$
-  skip-dirs-use-default: true
-
   modules-download-mode: readonly
-
+  issues-exit-code: 1
+  tests: true
 output:
-  format: colored-line-number
+  formats:
+    text:
+      path: stdout
+linters:
+  enable:
+    - bidichk
+    - bodyclose
+    - contextcheck
+    - errname
+    - errorlint
+    - goconst
+    - godot
+    - gosec
+    - misspell
+    - nilerr
+    - reassign
+    - tparallel
+    - unparam
+    - whitespace
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - goconst
+        path: (.+)_test\.go
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
